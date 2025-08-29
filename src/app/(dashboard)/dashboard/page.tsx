@@ -2,8 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 import { authClient } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 
 export default function Page() {
+  const router = useRouter();
   const {
     data: session,
     isPending, //loading state
@@ -19,6 +21,19 @@ export default function Page() {
       <h1>Dashboard Home Page</h1>
       <pre>{JSON.stringify(session, null, 2)}</pre>
       <Button onClick={() => refetch()}>Refetch</Button>
+      <Button
+        onClick={async () =>
+          await authClient.signOut({
+            fetchOptions: {
+              onSuccess: () => {
+                router.push('/sign-in');
+              },
+            },
+          })
+        }
+      >
+        Sign Out
+      </Button>
     </div>
   );
 }
