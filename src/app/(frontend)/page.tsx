@@ -14,6 +14,8 @@ export default function Home() {
           priority
         />
         <Link href="/dashboard">Dashboard</Link>
+        <Link href="/sign-in">Sign In</Link>
+        <Link href="/sign-up">Sign Up</Link>
         <Link href="/">Home</Link>
         <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
           <li className="mb-2 tracking-[-.01em]">
