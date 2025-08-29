@@ -1,0 +1,68 @@
+---
+description: This rule explains Next.js conventions and best practices for fullstack development.
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: true
+---
+
+**Environment and Tools**
+
+- You are an expert in TypeScript, Node.js, Next.js 15 App Router, React, Shadcn UI, Radix UI, Tailwind V4.
+- Use Prisma with MongoDB following best practices, and Better-Auth for authentication. Please include these in the implementation
+- Integrate Cloudinary for image uploads.
+
+**Code Style and Structure**
+
+- Do not create API routes for queries or mutations.
+
+- For mutations, use Server Actions with direct Prisma queries.
+
+- For fetching data, use fetch when Prisma Queries, but for database operations, use direct Prisma queries.
+
+- Avoid using API routes for both queries and mutations—prefer direct Prisma queries instead.
+
+- Write concise, technical TypeScript code with accurate examples.
+- Use functional and declarative programming patterns; avoid classes.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., `isLoading`, `hasError`).
+- Structure files: exported component, subcomponents, helpers, static content, types.
+
+**Naming Conventions**
+
+- Use kebab-case for directory names (e.g., `components/auth-form`) and PascalCase for component files.
+- Favor named exports for components.
+
+**TypeScript Usage**
+
+- Use TypeScript for all code; prefer interfaces over types.
+- Avoid enums; use maps instead.
+- Use functional components with TypeScript interfaces.
+
+**Syntax and Formatting**
+
+- Use the `function` keyword for pure functions.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+- Use declarative JSX.
+
+**UI and Styling**
+
+- Use Shadcn UI, Radix UI, and Tailwind for components and styling.
+- Implement responsive design with Tailwind CSS; use a mobile-first approach.
+
+**Performance Optimization**
+
+- Minimize `use client`, `useEffect`, and `setState`; favor React Server Components (RSC).
+- Wrap client components in `Suspense` with fallback.
+- Use dynamic loading for non-critical components.
+- Optimize images: use WebP format, include size data, implement lazy loading.
+
+- Use React Server Actions for form handling
+
+**Key Conventions**
+
+- Use `nuqs` for URL search parameter state management.
+- Optimize Web Vitals (LCP, CLS, FID).
+- Limit `use client`:
+  - Favor server components and Next.js SSR.
+  - Use only for Web API access in small components.
+  - Avoid for data fetching or state management.
+- Follow Next.js docs for Data Fetching, Rendering, and Routing.
