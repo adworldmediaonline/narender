@@ -13,6 +13,7 @@ import {
 } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { ArrowUpDown, Edit, Plus, Search, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -86,6 +87,36 @@ export default function CategoriesTable({
 
   const columns: ColumnDef<BlogCategory>[] = useMemo(
     () => [
+      {
+        id: 'image',
+        header: 'Image',
+        cell: ({ row }) => {
+          const category = row.original;
+          return (
+            <div className="flex items-center">
+              {category.bannerImage &&
+              typeof category.bannerImage === 'object' &&
+              'url' in category.bannerImage ? (
+                <div className="relative w-16 h-12 rounded-md overflow-hidden border">
+                  <Image
+                    src={category.bannerImage.url as string}
+                    alt={
+                      (category.bannerImage.altText as string) ||
+                      category.name
+                    }
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-16 h-12 rounded-md bg-muted flex items-center justify-center border">
+                  <span className="text-xs text-muted-foreground">No image</span>
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
       {
         accessorKey: 'name',
         header: ({ column }) => {

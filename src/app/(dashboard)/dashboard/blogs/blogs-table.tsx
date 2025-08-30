@@ -13,6 +13,7 @@ import {
 } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { ArrowUpDown, Edit, Eye, Plus, Search, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -83,6 +84,36 @@ export default function BlogsTable({ initialBlogs }: BlogsTableProps) {
 
   const columns: ColumnDef<Blog>[] = useMemo(
     () => [
+      {
+        id: 'image',
+        header: 'Image',
+        cell: ({ row }) => {
+          const blog = row.original;
+          return (
+            <div className="flex items-center">
+              {blog.blogImage &&
+              typeof blog.blogImage === 'object' &&
+              'url' in blog.blogImage ? (
+                <div className="relative w-16 h-12 rounded-md overflow-hidden border">
+                  <Image
+                    src={blog.blogImage.url as string}
+                    alt={
+                      (blog.blogImage.altText as string) ||
+                      blog.title
+                    }
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-16 h-12 rounded-md bg-muted flex items-center justify-center border">
+                  <span className="text-xs text-muted-foreground">No image</span>
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
       {
         accessorKey: 'title',
         header: ({ column }) => {
