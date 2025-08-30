@@ -59,25 +59,6 @@ export default function NewCategoryPage() {
   const name = form.watch('name');
   const slug = name ? slugify(name, { lower: true, strict: true }) : '';
 
-  const handleImageUpload = (file: File) => {
-    if (file.size > 5 * 1024 * 1024) {
-      // 5MB limit
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
-      return;
-    }
-
-    setBannerImage(file);
-  };
-
-  const removeImage = () => {
-    setBannerImage(null);
-  };
-
   async function onSubmit(values: BlogCategoryFormData) {
     try {
       setIsLoading(true);
@@ -204,57 +185,63 @@ export default function NewCategoryPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Form {...form}>
-                  <FormField
-                    control={form.control}
-                    name="bannerImage"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Banner Image</FormLabel>
-                        <FormControl>
-                          <div className="space-y-4">
-                            {form.watch('bannerImage') &&
-                            form.watch('bannerImage') instanceof File ? (
-                              <div className="relative">
+                <FormField
+                  control={form.control}
+                  name="bannerImage"
+                  render={() => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="space-y-4">
+                          {/* New Image Preview */}
+                          {bannerImage && (
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">
+                                Image Preview
+                              </label>
+                              <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
                                 <Image
-                                  src={URL.createObjectURL(
-                                    form.watch('bannerImage') as File
-                                  )}
-                                  alt="Preview"
-                                  width={400}
-                                  height={200}
-                                  className="rounded-lg object-cover"
+                                  src={URL.createObjectURL(bannerImage)}
+                                  alt="New banner preview"
+                                  fill
+                                  className="object-cover"
                                 />
-                                <Button
-                                  type="button"
-                                  variant="destructive"
-                                  size="sm"
-                                  className="absolute top-2 right-2"
-                                  onClick={() =>
-                                    form.setValue('bannerImage', undefined)
-                                  }
-                                >
-                                  Remove
-                                </Button>
                               </div>
-                            ) : null}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setBannerImage(null)}
+                                disabled={isLoading}
+                              >
+                                Remove Image
+                              </Button>
+                            </div>
+                          )}
+
+                          {/* Upload Input */}
+                          <div className="space-y-2">
                             <Input
                               type="file"
                               accept="image/*"
                               onChange={e => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  form.setValue('bannerImage', file);
+                                  setBannerImage(file);
                                 }
                               }}
+                              disabled={isLoading}
                             />
+                            <p className="text-xs text-muted-foreground">
+                              Upload a banner image for this category.
+                              Recommended: 1200x400px
+                            </p>
                           </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </Form>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
           </div>

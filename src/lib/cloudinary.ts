@@ -71,7 +71,7 @@ export async function uploadToCloudinary(
 export async function deleteFromCloudinary(publicId: string): Promise<void> {
   try {
     await new Promise<void>((resolve, reject) => {
-      cloudinary.uploader.destroy(publicId, (error, result) => {
+      cloudinary.uploader.destroy(publicId, (error) => {
         if (error) reject(error);
         else resolve();
       });
@@ -93,7 +93,7 @@ export async function updateImageAltText(
         {
           context: `alt=${altText}`,
         },
-        (error, result) => {
+        (error) => {
           if (error) reject(error);
           else resolve();
         }
