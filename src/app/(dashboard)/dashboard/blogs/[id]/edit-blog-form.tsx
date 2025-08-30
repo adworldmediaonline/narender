@@ -449,7 +449,6 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                         setSelectedTags(selectedTagsData);
                       }}
                       placeholder="Select tags..."
-                      className="w-full"
                     />
                     <div className="flex flex-wrap gap-1 mt-2">
                       {selectedTags.map(tag => (

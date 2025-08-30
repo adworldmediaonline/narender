@@ -3,13 +3,10 @@ import { notFound } from 'next/navigation';
 import { getAllCategories, getBlogById } from '@/lib/server/blog';
 import EditBlogForm from './edit-blog-form';
 
-interface EditBlogPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default async function EditBlogPage({ params }: EditBlogPageProps) {
+export default async function EditBlogPage(props: {
+  params: Promise<{ id: string }>;
+}) {
+  const params = await props.params;
   const [blogResult, categoriesResult] = await Promise.all([
     getBlogById(params.id),
     getAllCategories(),

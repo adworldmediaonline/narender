@@ -143,33 +143,6 @@ export default function NewBlogPage() {
     }
   };
 
-  const handleImageUpload = (file: File, type: 'blog' | 'banner') => {
-    if (file.size > 5 * 1024 * 1024) {
-      // 5MB limit
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
-      return;
-    }
-
-    if (type === 'blog') {
-      setBlogImage(file);
-    } else {
-      setBannerImage(file);
-    }
-  };
-
-  const removeImage = (type: 'blog' | 'banner') => {
-    if (type === 'blog') {
-      setBlogImage(null);
-    } else {
-      setBannerImage(null);
-    }
-  };
-
   async function onSubmit(values: BlogFormData) {
     try {
       setIsLoading(true);
@@ -489,7 +462,6 @@ export default function NewBlogPage() {
                               setSelectedTags(selectedTagsData);
                             }}
                             placeholder="Select tags..."
-                            className="w-full"
                           />
                         </FormControl>
                         <div className="flex flex-wrap gap-1 mt-2">
@@ -525,13 +497,10 @@ export default function NewBlogPage() {
                         <FormLabel>Blog Image</FormLabel>
                         <FormControl>
                           <div className="space-y-4">
-                            {form.watch('blogImage') &&
-                            form.watch('blogImage') instanceof File ? (
+                            {blogImage && (
                               <div className="relative">
                                 <Image
-                                  src={URL.createObjectURL(
-                                    form.watch('blogImage') as File
-                                  )}
+                                  src={URL.createObjectURL(blogImage)}
                                   alt="Preview"
                                   width={300}
                                   height={200}
@@ -542,21 +511,19 @@ export default function NewBlogPage() {
                                   variant="destructive"
                                   size="sm"
                                   className="absolute top-2 right-2"
-                                  onClick={() =>
-                                    form.setValue('blogImage', undefined)
-                                  }
+                                  onClick={() => setBlogImage(null)}
                                 >
                                   Remove
                                 </Button>
                               </div>
-                            ) : null}
+                            )}
                             <Input
                               type="file"
                               accept="image/*"
                               onChange={e => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  form.setValue('blogImage', file);
+                                  setBlogImage(file);
                                 }
                               }}
                             />
@@ -576,13 +543,10 @@ export default function NewBlogPage() {
                         <FormLabel>Banner Image</FormLabel>
                         <FormControl>
                           <div className="space-y-4">
-                            {form.watch('bannerImage') &&
-                            form.watch('bannerImage') instanceof File ? (
+                            {bannerImage && (
                               <div className="relative">
                                 <Image
-                                  src={URL.createObjectURL(
-                                    form.watch('bannerImage') as File
-                                  )}
+                                  src={URL.createObjectURL(bannerImage)}
                                   alt="Preview"
                                   width={400}
                                   height={200}
@@ -593,21 +557,19 @@ export default function NewBlogPage() {
                                   variant="destructive"
                                   size="sm"
                                   className="absolute top-2 right-2"
-                                  onClick={() =>
-                                    form.setValue('bannerImage', undefined)
-                                  }
+                                  onClick={() => setBannerImage(null)}
                                 >
                                   Remove
                                 </Button>
                               </div>
-                            ) : null}
+                            )}
                             <Input
                               type="file"
                               accept="image/*"
                               onChange={e => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  form.setValue('bannerImage', file);
+                                  setBannerImage(file);
                                 }
                               }}
                             />
