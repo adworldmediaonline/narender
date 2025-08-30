@@ -152,7 +152,7 @@ export default function SignUpPage() {
                       </div>
                     </FormControl>
                     <FormDescription className="text-xs">
-                      We'll send you a verification code
+                      We&apos;ll send you a verification code
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

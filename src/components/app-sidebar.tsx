@@ -2,20 +2,20 @@
 
 import {
   IconCamera,
+  IconCategory,
   IconChartBar,
   IconDashboard,
   IconDatabase,
   IconFileAi,
   IconFileDescription,
   IconFileWord,
-  IconFolder,
   IconHelp,
   IconInnerShadowTop,
-  IconListDetails,
   IconReport,
   IconSearch,
   IconSettings,
   IconUsers,
+  IconWriting,
 } from '@tabler/icons-react';
 import * as React from 'react';
 
@@ -42,23 +42,43 @@ const data = {
   navMain: [
     {
       title: 'Dashboard',
-      url: '#',
+      url: '/dashboard',
       icon: IconDashboard,
     },
     {
-      title: 'Lifecycle',
+      title: 'Blog Management',
       url: '#',
-      icon: IconListDetails,
+      icon: IconWriting,
+      items: [
+        {
+          title: 'All Blogs',
+          url: '/dashboard/blogs',
+        },
+        {
+          title: 'Add New Blog',
+          url: '/dashboard/blogs/new',
+        },
+      ],
+    },
+    {
+      title: 'Categories',
+      url: '#',
+      icon: IconCategory,
+      items: [
+        {
+          title: 'All Categories',
+          url: '/dashboard/categories',
+        },
+        {
+          title: 'Add New Category',
+          url: '/dashboard/categories/new',
+        },
+      ],
     },
     {
       title: 'Analytics',
       url: '#',
       icon: IconChartBar,
-    },
-    {
-      title: 'Projects',
-      url: '#',
-      icon: IconFolder,
     },
     {
       title: 'Team',

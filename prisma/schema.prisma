@@ -74,3 +74,54 @@ model Verification {
 
   @@map("verification")
 }
+
+model BlogCategory {
+  id          String   @id  @map("_id")
+  name        String
+  slug        String   @unique
+  description String?
+  bannerImage Json?    // { public_id: string, url: string, alt: string }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  blogs Blog[]
+
+  @@map("blog-category")
+}
+
+model Blog {
+  id             String       @id  @map("_id")
+  title          String
+  h1             String?
+  metaTitle      String?
+  metaDescription String?
+  metaKeywords   String[]
+  excerpt        String?
+  description    String       // Rich text content
+  slug           String       @unique
+  status         BlogStatus   @default(DRAFT)
+
+  // Images
+  blogImage      Json?        // { public_id: string, url: string, alt: string }
+  bannerImage    Json?        // { public_id: string, url: string, alt: string }
+  imageAltText   String?
+
+  // Relations
+  categoryId     String
+  category       BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Tags
+  tags           String[]
+
+  // Timestamps
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("blog")
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+}
