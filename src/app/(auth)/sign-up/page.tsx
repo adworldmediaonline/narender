@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 const formSchema = z.object({
@@ -32,6 +33,7 @@ const formSchema = z.object({
 });
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const form = useForm<z.infer<typeof formSchema>>({
@@ -44,20 +46,25 @@ export default function SignUpPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { data, error } = await authClient.signUp.email(
+    await authClient.signUp.email(
       {
         email: values.email,
         password: values.password,
         name: values.name,
 
-        callbackURL: '/dashboard',
+        callbackURL: `/verify-email?email=${encodeURIComponent(
+          values.email || ''
+        )}`,
       },
       {
-        onRequest: ctx => {
+        onRequest: () => {
           setIsLoading(true);
         },
-        onSuccess: ctx => {
+        onSuccess: () => {
           setIsLoading(false);
+          router.push(
+            `/verify-email?email=${encodeURIComponent(values.email)}`
+          );
         },
         onError: ctx => {
           setIsLoading(false);

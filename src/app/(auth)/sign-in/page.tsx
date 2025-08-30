@@ -42,17 +42,17 @@ export default function SignInPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { data, error } = await authClient.signIn.email(
+    await authClient.signIn.email(
       {
         email: values.email,
         password: values.password,
         callbackURL: '/dashboard',
       },
       {
-        onRequest: ctx => {
+        onRequest: () => {
           setIsLoading(true);
         },
-        onSuccess: ctx => {
+        onSuccess: () => {
           router.push('/dashboard');
           setIsLoading(false);
         },
