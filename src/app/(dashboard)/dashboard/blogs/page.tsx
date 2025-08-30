@@ -12,7 +12,7 @@ export default async function BlogsPage() {
             <h1 className="text-3xl font-bold tracking-tight">
               Blog Management
             </h1>
-            <p className="text-muted-foreground text-red-600">
+            <p className="text-red-600">
               Failed to load blogs. Please try refreshing the page.
             </p>
           </div>

@@ -487,7 +487,7 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
                         <FormControl>
                           <ImageUpload
                             {...field}
-                            maxSize={5 * 1024 * 1024} // 5MB
+                            maxSize={1 * 1024 * 1024} // 1MB
                             disabled={isLoading}
                             className="w-full"
                           >
@@ -513,7 +513,7 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
                         <FormControl>
                           <ImageUpload
                             {...field}
-                            maxSize={5 * 1024 * 1024} // 5MB
+                            maxSize={1 * 1024 * 1024} // 1MB
                             disabled={isLoading}
                             className="w-full"
                           >
