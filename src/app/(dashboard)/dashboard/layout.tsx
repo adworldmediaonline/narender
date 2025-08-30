@@ -1,12 +1,27 @@
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { auth } from '../../../lib/auth';
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect('/sign-in');
+  }
+
+  if (session.user.role !== 'admin') {
+    redirect('/sign-in');
+  }
+
   return (
     <>
       <SidebarProvider

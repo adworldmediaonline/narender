@@ -8,6 +8,17 @@ export const auth = betterAuth({
     provider: 'mongodb',
   }),
 
+  user: {
+    additionalFields: {
+      role: {
+        type: 'string',
+        input: false,
+        defaultValue: 'user',
+        required: false,
+      },
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
     autoSignIn: false, //defaults to true
