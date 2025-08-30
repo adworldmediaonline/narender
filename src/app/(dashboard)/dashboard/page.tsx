@@ -1,5 +1,3 @@
-'use client';
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,127 +19,28 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 import { getDashboardStats } from '@/lib/server/blog';
 
-interface DashboardStats {
-  totalBlogs: number;
-  publishedBlogs: number;
-  draftBlogs: number;
-  totalCategories: number;
-  recentBlogs: Array<{
-    id: string;
-    title: string;
-    status: string;
-    category: {
-      name: string;
-    };
-    createdAt: Date;
-  }>;
-  categoriesWithCount: Array<{
-    name: string;
-    _count: {
-      blogs: number;
-    };
-  }>;
-}
+export default async function DashboardPage() {
+  const result = await getDashboardStats();
 
-export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setIsLoading(true);
-        const result = await getDashboardStats();
-        if (result.success && result.stats) {
-          setStats(result.stats);
-        } else {
-          toast.error('Failed to load dashboard stats');
-        }
-      } catch {
-        toast.error('Failed to load dashboard stats');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  if (isLoading || !stats) {
+  if (!result.success || !result.stats) {
     return (
       <div className="flex-1 space-y-6 p-6">
         <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="h-8 w-48 bg-muted rounded animate-pulse"></div>
-            <div className="h-4 w-64 bg-muted rounded animate-pulse"></div>
-          </div>
-        </div>
-
-        {/* Stats Cards Skeleton */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-lg border bg-card p-6">
-              <div className="flex items-center justify-between">
-                <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
-                <div className="h-4 w-4 bg-muted rounded animate-pulse"></div>
-              </div>
-              <div className="mt-4 space-y-2">
-                <div className="h-8 w-12 bg-muted rounded animate-pulse"></div>
-                <div className="h-3 w-20 bg-muted rounded animate-pulse"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Content Skeleton */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border bg-card">
-            <div className="p-6">
-              <div className="space-y-4">
-                <div className="h-6 w-32 bg-muted rounded animate-pulse"></div>
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center space-x-4 p-4 border rounded"
-                  >
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse"></div>
-                      <div className="flex gap-2">
-                        <div className="h-5 w-16 bg-muted rounded animate-pulse"></div>
-                        <div className="h-5 w-12 bg-muted rounded animate-pulse"></div>
-                      </div>
-                      <div className="h-3 w-20 bg-muted rounded animate-pulse"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="rounded-lg border bg-card">
-            <div className="p-6">
-              <div className="space-y-4">
-                <div className="h-6 w-24 bg-muted rounded animate-pulse"></div>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-3 w-3 bg-muted rounded animate-pulse"></div>
-                      <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
-                    </div>
-                    <div className="h-6 w-12 bg-muted rounded animate-pulse"></div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground text-red-600">
+              Failed to load dashboard data. Please try refreshing the page.
+            </p>
           </div>
         </div>
       </div>
     );
   }
+
+  const stats = result.stats;
   return (
     <div className="flex-1 space-y-6 p-6">
       <div className="flex items-center justify-between">
