@@ -21,49 +21,127 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
-// Mock data - replace with actual data fetching
-const stats = {
-  totalBlogs: 24,
-  publishedBlogs: 18,
-  draftBlogs: 6,
-  totalCategories: 8,
-  recentBlogs: [
-    {
-      id: '1',
-      title: 'Getting Started with Next.js 15',
-      status: 'PUBLISHED',
-      category: 'Technology',
-      createdAt: new Date('2024-01-15'),
-      views: 1234,
-    },
-    {
-      id: '2',
-      title: 'Building Modern Web Applications',
-      status: 'DRAFT',
-      category: 'Development',
-      createdAt: new Date('2024-01-10'),
-      views: 0,
-    },
-    {
-      id: '3',
-      title: 'UI/UX Best Practices',
-      status: 'PUBLISHED',
-      category: 'Design',
-      createdAt: new Date('2024-01-08'),
-      views: 856,
-    },
-  ],
-  categories: [
-    { name: 'Technology', count: 8, color: 'bg-blue-500' },
-    { name: 'Development', count: 6, color: 'bg-green-500' },
-    { name: 'Design', count: 5, color: 'bg-purple-500' },
-    { name: 'Tutorial', count: 3, color: 'bg-orange-500' },
-    { name: 'News', count: 2, color: 'bg-red-500' },
-  ],
-};
+import { getDashboardStats } from '@/lib/actions/blog';
+
+interface DashboardStats {
+  totalBlogs: number;
+  publishedBlogs: number;
+  draftBlogs: number;
+  totalCategories: number;
+  recentBlogs: Array<{
+    id: string;
+    title: string;
+    status: string;
+    category: {
+      name: string;
+    };
+    createdAt: Date;
+  }>;
+  categoriesWithCount: Array<{
+    name: string;
+    _count: {
+      blogs: number;
+    };
+  }>;
+}
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setIsLoading(true);
+        const result = await getDashboardStats();
+        if (result.success && result.stats) {
+          setStats(result.stats);
+        } else {
+          toast.error('Failed to load dashboard stats');
+        }
+      } catch (error) {
+        toast.error('Failed to load dashboard stats');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (isLoading || !stats) {
+    return (
+      <div className="flex-1 space-y-6 p-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-muted rounded animate-pulse"></div>
+            <div className="h-4 w-64 bg-muted rounded animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-lg border bg-card p-6">
+              <div className="flex items-center justify-between">
+                <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
+                <div className="h-4 w-4 bg-muted rounded animate-pulse"></div>
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="h-8 w-12 bg-muted rounded animate-pulse"></div>
+                <div className="h-3 w-20 bg-muted rounded animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-lg border bg-card">
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="h-6 w-32 bg-muted rounded animate-pulse"></div>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center space-x-4 p-4 border rounded"
+                  >
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse"></div>
+                      <div className="flex gap-2">
+                        <div className="h-5 w-16 bg-muted rounded animate-pulse"></div>
+                        <div className="h-5 w-12 bg-muted rounded animate-pulse"></div>
+                      </div>
+                      <div className="h-3 w-20 bg-muted rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg border bg-card">
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="h-6 w-24 bg-muted rounded animate-pulse"></div>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-3 w-3 bg-muted rounded animate-pulse"></div>
+                      <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
+                    </div>
+                    <div className="h-6 w-12 bg-muted rounded animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex-1 space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -157,7 +235,7 @@ export default function DashboardPage() {
                     </p>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
-                        {blog.category}
+                        {blog.category.name}
                       </Badge>
                       <Badge
                         variant={
@@ -170,7 +248,6 @@ export default function DashboardPage() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {format(blog.createdAt, 'MMM dd, yyyy')}
-                      {blog.views > 0 && ` • ${blog.views} views`}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -180,7 +257,7 @@ export default function DashboardPage() {
                       </Link>
                     </Button>
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/dashboard/blogs/${blog.id}/edit`}>
+                      <Link href={`/dashboard/blogs/${blog.id}`}>
                         <Edit className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -206,18 +283,35 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {stats.categories.map(category => (
-                <div
-                  key={category.name}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${category.color}`} />
-                    <span className="text-sm font-medium">{category.name}</span>
+              {stats.categoriesWithCount.slice(0, 5).map((category, index) => {
+                const colors = [
+                  'bg-blue-500',
+                  'bg-green-500',
+                  'bg-purple-500',
+                  'bg-orange-500',
+                  'bg-red-500',
+                ];
+                return (
+                  <div
+                    key={category.name}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-3 h-3 rounded-full ${
+                          colors[index % colors.length]
+                        }`}
+                      />
+                      <span className="text-sm font-medium">
+                        {category.name}
+                      </span>
+                    </div>
+                    <Badge variant="outline">
+                      {category._count.blogs} blogs
+                    </Badge>
                   </div>
-                  <Badge variant="outline">{category.count} blogs</Badge>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="mt-4">
               <Button variant="outline" className="w-full" asChild>

@@ -1,10 +1,10 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Save, Upload, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Upload, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import slugify from 'slugify';
 import { z } from 'zod';
@@ -44,9 +44,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { createBlog, getAllCategories } from '@/lib/actions/blog';
-import { useEffect } from 'react';
 import { toast } from 'sonner';
+
+import { getAllCategories, getBlogById, updateBlog } from '@/lib/actions/blog';
+import type { Blog, BlogFormData } from '@/lib/types/blog';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -64,8 +65,6 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-// Categories will be loaded from the server
-
 // Mock tags - replace with actual data
 const mockTags = [
   { value: 'react', label: 'React' },
@@ -77,9 +76,13 @@ const mockTags = [
   { value: 'guide', label: 'Guide' },
 ];
 
-export default function NewBlogPage() {
+export default function EditBlogPage() {
   const router = useRouter();
+  const params = useParams();
+  const blogId = params.id as string;
+
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const [blogImage, setBlogImage] = useState<File | null>(null);
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [selectedTags, setSelectedTags] = useState<
@@ -88,27 +91,7 @@ export default function NewBlogPage() {
   const [categories, setCategories] = useState<
     Array<{ id: string; name: string }>
   >([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
-
-  // Fetch categories on component mount
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const result = await getAllCategories();
-        if (result.success) {
-          setCategories(result.categories);
-        } else {
-          toast.error('Failed to load categories');
-        }
-      } catch (error) {
-        toast.error('Failed to load categories');
-      } finally {
-        setCategoriesLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []);
+  const [currentBlog, setCurrentBlog] = useState<Blog | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -130,6 +113,63 @@ export default function NewBlogPage() {
   // Auto-generate slug from title
   const title = form.watch('title');
   const slug = title ? slugify(title, { lower: true, strict: true }) : '';
+
+  // Fetch blog data and categories on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsFetching(true);
+
+        // Fetch blog data
+        const blogResult = await getBlogById(blogId);
+        if (!blogResult.success || !blogResult.blog) {
+          toast.error('Blog not found');
+          router.push('/dashboard/blogs');
+          return;
+        }
+
+        const blog = blogResult.blog;
+        setCurrentBlog(blog);
+
+        // Set form values
+        form.reset({
+          title: blog.title,
+          h1: blog.h1 || '',
+          metaTitle: blog.metaTitle || '',
+          metaDescription: blog.metaDescription || '',
+          metaKeywords: blog.metaKeywords,
+          excerpt: blog.excerpt || '',
+          description: blog.description,
+          status: blog.status,
+          categoryId: blog.categoryId,
+          tags: blog.tags,
+          imageAltText: blog.imageAltText || '',
+        });
+
+        // Set tags
+        const tagObjects = blog.tags.map(tag => ({
+          value: tag,
+          label: tag.charAt(0).toUpperCase() + tag.slice(1),
+        }));
+        setSelectedTags(tagObjects);
+
+        // Fetch categories
+        const categoriesResult = await getAllCategories();
+        if (categoriesResult.success) {
+          setCategories(categoriesResult.categories);
+        } else {
+          toast.error('Failed to load categories');
+        }
+      } catch (error) {
+        toast.error('Failed to load blog data');
+        router.push('/dashboard/blogs');
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    fetchData();
+  }, [blogId, form, router]);
 
   // Auto-generate meta fields from title and excerpt
   const handleAutoFillMeta = () => {
@@ -187,19 +227,68 @@ export default function NewBlogPage() {
         tags: selectedTags.map(tag => tag.value),
       };
 
-      const result = await createBlog(blogData);
+      const result = await updateBlog(blogId, blogData);
 
       if (result.success) {
-        toast.success('Blog created successfully!');
+        toast.success('Blog updated successfully!');
         router.push('/dashboard/blogs');
       } else {
-        toast.error(result.error || 'Failed to create blog');
+        toast.error(result.error || 'Failed to update blog');
       }
     } catch (error) {
-      toast.error('Failed to create blog');
+      toast.error('Failed to update blog');
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (isFetching) {
+    return (
+      <div className="flex-1 space-y-6 p-6">
+        <div className="flex items-center gap-4">
+          <div className="h-8 w-8 bg-muted rounded animate-pulse"></div>
+          <div className="space-y-2">
+            <div className="h-6 w-48 bg-muted rounded animate-pulse"></div>
+            <div className="h-4 w-64 bg-muted rounded animate-pulse"></div>
+          </div>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <div className="h-6 w-32 bg-muted rounded animate-pulse"></div>
+                <div className="h-4 w-64 bg-muted rounded animate-pulse"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
+                      <div className="h-10 bg-muted rounded animate-pulse"></div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="space-y-6">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <div className="h-6 w-24 bg-muted rounded animate-pulse"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="h-4 w-32 bg-muted rounded animate-pulse"></div>
+                    <div className="h-10 bg-muted rounded animate-pulse"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -212,9 +301,9 @@ export default function NewBlogPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Create New Blog</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Edit Blog</h1>
           <p className="text-muted-foreground">
-            Write and publish your blog post
+            Update your blog post information
           </p>
         </div>
       </div>
@@ -225,7 +314,7 @@ export default function NewBlogPage() {
             <CardHeader>
               <CardTitle>Blog Content</CardTitle>
               <CardDescription>
-                Fill in the main content and metadata for your blog post.
+                Update the main content and metadata for your blog post.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -244,6 +333,7 @@ export default function NewBlogPage() {
                           <FormControl>
                             <Input
                               placeholder="Enter blog title"
+                              disabled={isLoading}
                               {...field}
                               onBlur={handleAutoFillMeta}
                             />
@@ -282,6 +372,7 @@ export default function NewBlogPage() {
                           <FormControl>
                             <Input
                               placeholder="H1 heading for SEO"
+                              disabled={isLoading}
                               {...field}
                             />
                           </FormControl>
@@ -298,7 +389,8 @@ export default function NewBlogPage() {
                           <FormLabel>Status</FormLabel>
                           <Select
                             onValueChange={field.onChange}
-                            defaultValue={field.value}
+                            value={field.value}
+                            disabled={isLoading}
                           >
                             <FormControl>
                               <SelectTrigger>
@@ -329,6 +421,7 @@ export default function NewBlogPage() {
                             placeholder="Brief summary of your blog post (for previews)"
                             className="resize-none"
                             rows={3}
+                            disabled={isLoading}
                             {...field}
                             onBlur={handleAutoFillMeta}
                           />
@@ -348,6 +441,7 @@ export default function NewBlogPage() {
                           <Textarea
                             placeholder="Write your blog content here..."
                             className="resize-none min-h-[200px]"
+                            disabled={isLoading}
                             {...field}
                           />
                         </FormControl>
@@ -360,13 +454,13 @@ export default function NewBlogPage() {
                     <Button type="submit" disabled={isLoading} size="lg">
                       {isLoading ? (
                         <>
-                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                          Creating...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Updating...
                         </>
                       ) : (
                         <>
                           <Save className="mr-2 h-4 w-4" />
-                          Create Blog
+                          Update Blog
                         </>
                       )}
                     </Button>
@@ -391,7 +485,11 @@ export default function NewBlogPage() {
                   <FormItem>
                     <FormLabel>Meta Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="SEO title" {...field} />
+                      <Input
+                        placeholder="SEO title"
+                        disabled={isLoading}
+                        {...field}
+                      />
                     </FormControl>
                     <FormDescription className="text-xs">
                       Recommended: 50-60 characters
@@ -412,6 +510,7 @@ export default function NewBlogPage() {
                         placeholder="SEO description"
                         className="resize-none"
                         rows={2}
+                        disabled={isLoading}
                         {...field}
                       />
                     </FormControl>
@@ -432,6 +531,7 @@ export default function NewBlogPage() {
                     <FormControl>
                       <Input
                         placeholder="keyword1, keyword2, keyword3"
+                        disabled={isLoading}
                         {...field}
                         onChange={e => {
                           const keywords = e.target.value
@@ -462,18 +562,18 @@ export default function NewBlogPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={isLoading}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {categoriesLoading ? (
-                          <SelectItem value="" disabled>
-                            Loading categories...
-                          </SelectItem>
-                        ) : categories.length === 0 ? (
+                        {categories.length === 0 ? (
                           <SelectItem value="" disabled>
                             No categories available
                           </SelectItem>
@@ -536,7 +636,27 @@ export default function NewBlogPage() {
               {/* Blog Image */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Blog Image</label>
-                {blogImage ? (
+                {currentBlog?.blogImage && !blogImage ? (
+                  <div className="relative">
+                    <img
+                      src={currentBlog.blogImage.url}
+                      alt={currentBlog.blogImage.alt}
+                      className="w-full h-32 object-cover rounded-md"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => removeImage('blog')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Current image
+                    </p>
+                  </div>
+                ) : blogImage ? (
                   <div className="relative">
                     <img
                       src={URL.createObjectURL(blogImage)}
@@ -557,7 +677,7 @@ export default function NewBlogPage() {
                   <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-4 text-center">
                     <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                     <p className="text-sm text-muted-foreground mb-2">
-                      Upload blog image
+                      Upload new blog image
                     </p>
                     <input
                       type="file"
@@ -579,7 +699,27 @@ export default function NewBlogPage() {
               {/* Banner Image */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Banner Image</label>
-                {bannerImage ? (
+                {currentBlog?.bannerImage && !bannerImage ? (
+                  <div className="relative">
+                    <img
+                      src={currentBlog.bannerImage.url}
+                      alt={currentBlog.bannerImage.alt}
+                      className="w-full h-32 object-cover rounded-md"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => removeImage('banner')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Current image
+                    </p>
+                  </div>
+                ) : bannerImage ? (
                   <div className="relative">
                     <img
                       src={URL.createObjectURL(bannerImage)}
@@ -600,7 +740,7 @@ export default function NewBlogPage() {
                   <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-4 text-center">
                     <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                     <p className="text-sm text-muted-foreground mb-2">
-                      Upload banner image
+                      Upload new banner image
                     </p>
                     <input
                       type="file"
@@ -628,6 +768,7 @@ export default function NewBlogPage() {
                     <FormControl>
                       <Input
                         placeholder="Describe the images for accessibility"
+                        disabled={isLoading}
                         {...field}
                       />
                     </FormControl>

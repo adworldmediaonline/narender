@@ -47,68 +47,53 @@ import {
 } from '@/components/ui/table';
 import { toast } from 'sonner';
 
+import { deleteBlog, getBlogs } from '@/lib/actions/blog';
 import type { Blog } from '@/lib/types/blog';
-
-// Mock data - replace with actual data fetching
-const mockBlogs: Blog[] = [
-  {
-    id: '1',
-    title: 'Getting Started with Next.js 15',
-    slug: 'getting-started-with-nextjs-15',
-    status: 'PUBLISHED',
-    excerpt:
-      'Learn the latest features in Next.js 15 and how to get started with the new app directory.',
-    categoryId: '1',
-    category: {
-      id: '1',
-      name: 'Technology',
-      slug: 'technology',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    tags: ['nextjs', 'react', 'javascript'],
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-    description: 'Full article content here...',
-    metaKeywords: ['nextjs', 'tutorial', 'react'],
-  },
-  {
-    id: '2',
-    title: 'Building Modern Web Applications',
-    slug: 'building-modern-web-applications',
-    status: 'DRAFT',
-    excerpt:
-      'A comprehensive guide to building modern web applications with the latest technologies.',
-    categoryId: '2',
-    category: {
-      id: '2',
-      name: 'Development',
-      slug: 'development',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    tags: ['web-development', 'tutorial'],
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-12'),
-    description: 'Full article content here...',
-    metaKeywords: ['web development', 'tutorial'],
-  },
-];
+import { useEffect } from 'react';
 
 export default function BlogsPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
-  const [blogs, setBlogs] = useState<Blog[]>(mockBlogs);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+  // Fetch blogs on component mount and when search/filter changes
+  useEffect(() => {
+    fetchBlogs();
+  }, [globalFilter]);
+
+  const fetchBlogs = async () => {
+    try {
+      setIsLoading(true);
+      const result = await getBlogs(globalFilter);
+      if (result.success) {
+        setBlogs(result.blogs);
+      } else {
+        toast.error(result.error || 'Failed to fetch blogs');
+      }
+    } catch (error) {
+      toast.error('Failed to fetch blogs');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDeleteBlog = async (blogId: string) => {
     try {
-      // TODO: Implement delete blog server action
-      console.log('Deleting blog:', blogId);
-      setBlogs(blogs.filter(blog => blog.id !== blogId));
-      toast.success('Blog deleted successfully');
+      setIsDeleting(blogId);
+      const result = await deleteBlog(blogId);
+      if (result.success) {
+        setBlogs(blogs.filter(blog => blog.id !== blogId));
+        toast.success('Blog deleted successfully');
+      } else {
+        toast.error(result.error || 'Failed to delete blog');
+      }
     } catch (error) {
       toast.error('Failed to delete blog');
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -188,14 +173,22 @@ export default function BlogsPage() {
               </Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <Link href={`/dashboard/blogs/${row.original.id}/edit`}>
+              <Link href={`/dashboard/blogs/${row.original.id}`}>
                 <Edit className="h-4 w-4" />
               </Link>
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Trash2 className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={isDeleting === row.original.id}
+                >
+                  {isDeleting === row.original.id ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -204,16 +197,19 @@ export default function BlogsPage() {
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete
                     the blog "{row.original.title}" and remove all associated
-                    data.
+                    data from Cloudinary.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel disabled={isDeleting === row.original.id}>
+                    Cancel
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => handleDeleteBlog(row.original.id)}
+                    disabled={isDeleting === row.original.id}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    Delete
+                    {isDeleting === row.original.id ? 'Deleting...' : 'Delete'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -298,7 +294,35 @@ export default function BlogsPage() {
                 ))}
               </TableHeader>
               <TableBody>
-                {table.getRowModel().rows?.length ? (
+                {isLoading ? (
+                  // Loading skeleton
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-6 bg-muted rounded animate-pulse w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted rounded animate-pulse w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted rounded animate-pulse w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <div className="h-8 w-8 bg-muted rounded animate-pulse" />
+                          <div className="h-8 w-8 bg-muted rounded animate-pulse" />
+                          <div className="h-8 w-8 bg-muted rounded animate-pulse" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map(row => (
                     <TableRow
                       key={row.id}
@@ -320,7 +344,9 @@ export default function BlogsPage() {
                       colSpan={columns.length}
                       className="h-24 text-center"
                     >
-                      No blogs found.
+                      {globalFilter
+                        ? 'No blogs found matching your search.'
+                        : 'No blogs found. Create your first blog!'}
                     </TableCell>
                   </TableRow>
                 )}

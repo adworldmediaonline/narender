@@ -47,53 +47,53 @@ import {
 } from '@/components/ui/table';
 import { toast } from 'sonner';
 
+import { deleteCategory, getCategories } from '@/lib/actions/blog';
 import type { BlogCategory } from '@/lib/types/blog';
-
-// Mock data - replace with actual data fetching
-const mockCategories: BlogCategory[] = [
-  {
-    id: '1',
-    name: 'Technology',
-    slug: 'technology',
-    description: 'Articles about latest technology trends and innovations',
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-    _count: { blogs: 5 },
-  },
-  {
-    id: '2',
-    name: 'Development',
-    slug: 'development',
-    description: 'Web development tutorials and best practices',
-    createdAt: new Date('2024-01-02'),
-    updatedAt: new Date('2024-01-03'),
-    _count: { blogs: 3 },
-  },
-  {
-    id: '3',
-    name: 'Design',
-    slug: 'design',
-    description: 'UI/UX design principles and creative inspiration',
-    createdAt: new Date('2024-01-05'),
-    updatedAt: new Date('2024-01-05'),
-    _count: { blogs: 2 },
-  },
-];
+import { useEffect } from 'react';
 
 export default function CategoriesPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
-  const [categories, setCategories] = useState<BlogCategory[]>(mockCategories);
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+  // Fetch categories on component mount and when search changes
+  useEffect(() => {
+    fetchCategories();
+  }, [globalFilter]);
+
+  const fetchCategories = async () => {
+    try {
+      setIsLoading(true);
+      const result = await getCategories(globalFilter);
+      if (result.success) {
+        setCategories(result.categories);
+      } else {
+        toast.error(result.error || 'Failed to fetch categories');
+      }
+    } catch (error) {
+      toast.error('Failed to fetch categories');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDeleteCategory = async (categoryId: string) => {
     try {
-      // TODO: Implement delete category server action
-      console.log('Deleting category:', categoryId);
-      setCategories(categories.filter(cat => cat.id !== categoryId));
-      toast.success('Category deleted successfully');
+      setIsDeleting(categoryId);
+      const result = await deleteCategory(categoryId);
+      if (result.success) {
+        setCategories(categories.filter(cat => cat.id !== categoryId));
+        toast.success('Category deleted successfully');
+      } else {
+        toast.error(result.error || 'Failed to delete category');
+      }
     } catch (error) {
       toast.error('Failed to delete category');
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -168,14 +168,22 @@ export default function CategoriesPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <Link href={`/dashboard/categories/${row.original.id}/edit`}>
+              <Link href={`/dashboard/categories/${row.original.id}`}>
                 <Edit className="h-4 w-4" />
               </Link>
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Trash2 className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={isDeleting === row.original.id}
+                >
+                  {isDeleting === row.original.id ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -183,17 +191,21 @@ export default function CategoriesPage() {
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete
-                    the category "{row.original.name}" and may affect associated
-                    blogs.
+                    the category "{row.original.name}" and remove its banner
+                    image from Cloudinary. Make sure no blogs are using this
+                    category.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel disabled={isDeleting === row.original.id}>
+                    Cancel
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => handleDeleteCategory(row.original.id)}
+                    disabled={isDeleting === row.original.id}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    Delete
+                    {isDeleting === row.original.id ? 'Deleting...' : 'Delete'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -280,7 +292,34 @@ export default function CategoriesPage() {
                 ))}
               </TableHeader>
               <TableBody>
-                {table.getRowModel().rows?.length ? (
+                {isLoading ? (
+                  // Loading skeleton
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <div className="h-4 bg-muted rounded animate-pulse w-1/2" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted rounded animate-pulse w-1/3" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-6 bg-muted rounded animate-pulse w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted rounded animate-pulse w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <div className="h-8 w-8 bg-muted rounded animate-pulse" />
+                          <div className="h-8 w-8 bg-muted rounded animate-pulse" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map(row => (
                     <TableRow
                       key={row.id}
@@ -302,7 +341,9 @@ export default function CategoriesPage() {
                       colSpan={columns.length}
                       className="h-24 text-center"
                     >
-                      No categories found.
+                      {globalFilter
+                        ? 'No categories found matching your search.'
+                        : 'No categories found. Create your first category!'}
                     </TableCell>
                   </TableRow>
                 )}
