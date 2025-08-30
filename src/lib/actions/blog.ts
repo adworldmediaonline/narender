@@ -1,34 +1,43 @@
 'use server';
 
+import { Prisma } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+
 import { deleteFromCloudinary, uploadToCloudinary } from '@/lib/cloudinary';
 import prisma from '@/lib/prisma';
-import { BlogCategoryFormData, BlogFormData } from '@/lib/types/blog';
-import { revalidatePath } from 'next/cache';
+import type {
+  BlogCategoryFormData,
+  BlogFormData,
+  CloudinaryImageData,
+} from '@/lib/types/blog';
 import slugify from 'slugify';
 
-// Blog Actions
 export async function createBlog(data: BlogFormData) {
   try {
-    let blogImageData = null;
-    let bannerImageData = null;
+    let blogImageData: Prisma.JsonValue = null;
+    let bannerImageData: Prisma.JsonValue = null;
 
     // Handle blog image upload
     if (data.blogImage && data.blogImage instanceof File) {
-      blogImageData = await uploadToCloudinary(data.blogImage, 'blog-images');
+      const uploadedImage = await uploadToCloudinary(
+        data.blogImage,
+        'blog-images'
+      );
+      blogImageData = uploadedImage as unknown as Prisma.JsonValue;
     }
 
     // Handle banner image upload
     if (data.bannerImage && data.bannerImage instanceof File) {
-      bannerImageData = await uploadToCloudinary(
+      const uploadedImage = await uploadToCloudinary(
         data.bannerImage,
         'blog-banners'
       );
+      bannerImageData = uploadedImage as unknown as Prisma.JsonValue;
     }
-
-    const slug = slugify(data.title, { lower: true, strict: true });
 
     const blog = await prisma.blog.create({
       data: {
+        id: crypto.randomUUID(),
         title: data.title,
         h1: data.h1,
         metaTitle: data.metaTitle,
@@ -36,16 +45,13 @@ export async function createBlog(data: BlogFormData) {
         metaKeywords: data.metaKeywords,
         excerpt: data.excerpt,
         description: data.description,
-        slug,
+        slug: slugify(data.title, { lower: true, strict: true }),
         status: data.status,
         blogImage: blogImageData,
         bannerImage: bannerImageData,
         imageAltText: data.imageAltText,
         categoryId: data.categoryId,
         tags: data.tags,
-      },
-      include: {
-        category: true,
       },
     });
 
@@ -67,33 +73,48 @@ export async function updateBlog(id: string, data: BlogFormData) {
       return { success: false, error: 'Blog not found' };
     }
 
-    let blogImageData = existingBlog.blogImage;
-    let bannerImageData = existingBlog.bannerImage;
+    let blogImageData: Prisma.JsonValue = existingBlog.blogImage;
+    let bannerImageData: Prisma.JsonValue = existingBlog.bannerImage;
 
     // Handle blog image upload/update
     if (data.blogImage && data.blogImage instanceof File) {
       // Delete old image if exists
-      if (existingBlog.blogImage?.public_id) {
-        await deleteFromCloudinary(existingBlog.blogImage.public_id);
+      if (
+        existingBlog.blogImage &&
+        typeof existingBlog.blogImage === 'object' &&
+        'public_id' in existingBlog.blogImage
+      ) {
+        await deleteFromCloudinary(
+          (existingBlog.blogImage as CloudinaryImageData).public_id
+        );
       }
-      blogImageData = await uploadToCloudinary(data.blogImage, 'blog-images');
+      const uploadedImage = await uploadToCloudinary(
+        data.blogImage,
+        'blog-images'
+      );
+      blogImageData = uploadedImage as unknown as Prisma.JsonValue;
     }
 
     // Handle banner image upload/update
     if (data.bannerImage && data.bannerImage instanceof File) {
       // Delete old image if exists
-      if (existingBlog.bannerImage?.public_id) {
-        await deleteFromCloudinary(existingBlog.bannerImage.public_id);
+      if (
+        existingBlog.bannerImage &&
+        typeof existingBlog.bannerImage === 'object' &&
+        'public_id' in existingBlog.bannerImage
+      ) {
+        await deleteFromCloudinary(
+          (existingBlog.bannerImage as CloudinaryImageData).public_id
+        );
       }
-      bannerImageData = await uploadToCloudinary(
+      const uploadedImage = await uploadToCloudinary(
         data.bannerImage,
         'blog-banners'
       );
+      bannerImageData = uploadedImage as unknown as Prisma.JsonValue;
     }
 
-    const slug = slugify(data.title, { lower: true, strict: true });
-
-    const blog = await prisma.blog.update({
+    const updatedBlog = await prisma.blog.update({
       where: { id },
       data: {
         title: data.title,
@@ -103,7 +124,7 @@ export async function updateBlog(id: string, data: BlogFormData) {
         metaKeywords: data.metaKeywords,
         excerpt: data.excerpt,
         description: data.description,
-        slug,
+        slug: slugify(data.title, { lower: true, strict: true }),
         status: data.status,
         blogImage: blogImageData,
         bannerImage: bannerImageData,
@@ -111,14 +132,10 @@ export async function updateBlog(id: string, data: BlogFormData) {
         categoryId: data.categoryId,
         tags: data.tags,
       },
-      include: {
-        category: true,
-      },
     });
 
     revalidatePath('/dashboard/blogs');
-    revalidatePath(`/dashboard/blogs/${id}`);
-    return { success: true, blog };
+    return { success: true, blog: updatedBlog };
   } catch (error) {
     console.error('Error updating blog:', error);
     return { success: false, error: 'Failed to update blog' };
@@ -136,11 +153,23 @@ export async function deleteBlog(id: string) {
     }
 
     // Delete images from Cloudinary
-    if (blog.blogImage?.public_id) {
-      await deleteFromCloudinary(blog.blogImage.public_id);
+    if (
+      blog.blogImage &&
+      typeof blog.blogImage === 'object' &&
+      'public_id' in blog.blogImage
+    ) {
+      await deleteFromCloudinary(
+        (blog.blogImage as CloudinaryImageData).public_id
+      );
     }
-    if (blog.bannerImage?.public_id) {
-      await deleteFromCloudinary(blog.bannerImage.public_id);
+    if (
+      blog.bannerImage &&
+      typeof blog.bannerImage === 'object' &&
+      'public_id' in blog.bannerImage
+    ) {
+      await deleteFromCloudinary(
+        (blog.bannerImage as CloudinaryImageData).public_id
+      );
     }
 
     await prisma.blog.delete({
@@ -155,78 +184,24 @@ export async function deleteBlog(id: string) {
   }
 }
 
-export async function getBlogs(
-  search?: string,
-  status?: string,
-  categoryId?: string
-) {
-  try {
-    const blogs = await prisma.blog.findMany({
-      where: {
-        ...(search && {
-          OR: [
-            { title: { contains: search, mode: 'insensitive' } },
-            { excerpt: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-          ],
-        }),
-        ...(status && { status }),
-        ...(categoryId && { categoryId }),
-      },
-      include: {
-        category: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return { success: true, blogs };
-  } catch (error) {
-    console.error('Error fetching blogs:', error);
-    return { success: false, error: 'Failed to fetch blogs', blogs: [] };
-  }
-}
-
-export async function getBlogById(id: string) {
-  try {
-    const blog = await prisma.blog.findUnique({
-      where: { id },
-      include: {
-        category: true,
-      },
-    });
-
-    if (!blog) {
-      return { success: false, error: 'Blog not found' };
-    }
-
-    return { success: true, blog };
-  } catch (error) {
-    console.error('Error fetching blog:', error);
-    return { success: false, error: 'Failed to fetch blog' };
-  }
-}
-
-// Category Actions
 export async function createCategory(data: BlogCategoryFormData) {
   try {
-    let bannerImageData = null;
+    let bannerImageData: Prisma.JsonValue = null;
 
     // Handle banner image upload
     if (data.bannerImage && data.bannerImage instanceof File) {
-      bannerImageData = await uploadToCloudinary(
+      const uploadedImage = await uploadToCloudinary(
         data.bannerImage,
         'category-banners'
       );
+      bannerImageData = uploadedImage as unknown as Prisma.JsonValue;
     }
-
-    const slug = slugify(data.name, { lower: true, strict: true });
 
     const category = await prisma.blogCategory.create({
       data: {
+        id: crypto.randomUUID(),
         name: data.name,
-        slug,
+        slug: slugify(data.name, { lower: true, strict: true }),
         description: data.description,
         bannerImage: bannerImageData,
       },
@@ -250,35 +225,39 @@ export async function updateCategory(id: string, data: BlogCategoryFormData) {
       return { success: false, error: 'Category not found' };
     }
 
-    let bannerImageData = existingCategory.bannerImage;
+    let bannerImageData: Prisma.JsonValue = existingCategory.bannerImage;
 
     // Handle banner image upload/update
     if (data.bannerImage && data.bannerImage instanceof File) {
       // Delete old image if exists
-      if (existingCategory.bannerImage?.public_id) {
-        await deleteFromCloudinary(existingCategory.bannerImage.public_id);
+      if (
+        existingCategory.bannerImage &&
+        typeof existingCategory.bannerImage === 'object' &&
+        'public_id' in existingCategory.bannerImage
+      ) {
+        await deleteFromCloudinary(
+          (existingCategory.bannerImage as CloudinaryImageData).public_id
+        );
       }
-      bannerImageData = await uploadToCloudinary(
+      const uploadedImage = await uploadToCloudinary(
         data.bannerImage,
         'category-banners'
       );
+      bannerImageData = uploadedImage as unknown as Prisma.JsonValue;
     }
 
-    const slug = slugify(data.name, { lower: true, strict: true });
-
-    const category = await prisma.blogCategory.update({
+    const updatedCategory = await prisma.blogCategory.update({
       where: { id },
       data: {
         name: data.name,
-        slug,
+        slug: slugify(data.name, { lower: true, strict: true }),
         description: data.description,
         bannerImage: bannerImageData,
       },
     });
 
     revalidatePath('/dashboard/categories');
-    revalidatePath(`/dashboard/categories/${id}`);
-    return { success: true, category };
+    return { success: true, category: updatedCategory };
   } catch (error) {
     console.error('Error updating category:', error);
     return { success: false, error: 'Failed to update category' };
@@ -289,9 +268,6 @@ export async function deleteCategory(id: string) {
   try {
     const category = await prisma.blogCategory.findUnique({
       where: { id },
-      include: {
-        blogs: true,
-      },
     });
 
     if (!category) {
@@ -299,7 +275,11 @@ export async function deleteCategory(id: string) {
     }
 
     // Check if category has blogs
-    if (category.blogs.length > 0) {
+    const blogCount = await prisma.blog.count({
+      where: { categoryId: id },
+    });
+
+    if (blogCount > 0) {
       return {
         success: false,
         error: 'Cannot delete category with existing blogs',
@@ -307,8 +287,14 @@ export async function deleteCategory(id: string) {
     }
 
     // Delete banner image from Cloudinary
-    if (category.bannerImage?.public_id) {
-      await deleteFromCloudinary(category.bannerImage.public_id);
+    if (
+      category.bannerImage &&
+      typeof category.bannerImage === 'object' &&
+      'public_id' in category.bannerImage
+    ) {
+      await deleteFromCloudinary(
+        (category.bannerImage as CloudinaryImageData).public_id
+      );
     }
 
     await prisma.blogCategory.delete({
@@ -320,139 +306,5 @@ export async function deleteCategory(id: string) {
   } catch (error) {
     console.error('Error deleting category:', error);
     return { success: false, error: 'Failed to delete category' };
-  }
-}
-
-export async function getCategories(search?: string) {
-  try {
-    const categories = await prisma.blogCategory.findMany({
-      where: {
-        ...(search && {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-          ],
-        }),
-      },
-      include: {
-        _count: {
-          select: {
-            blogs: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return { success: true, categories };
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    return {
-      success: false,
-      error: 'Failed to fetch categories',
-      categories: [],
-    };
-  }
-}
-
-export async function getCategoryById(id: string) {
-  try {
-    const category = await prisma.blogCategory.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            blogs: true,
-          },
-        },
-      },
-    });
-
-    if (!category) {
-      return { success: false, error: 'Category not found' };
-    }
-
-    return { success: true, category };
-  } catch (error) {
-    console.error('Error fetching category:', error);
-    return { success: false, error: 'Failed to fetch category' };
-  }
-}
-
-// Utility function to get all categories for dropdowns
-export async function getAllCategories() {
-  try {
-    const categories = await prisma.blogCategory.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-
-    return { success: true, categories };
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    return {
-      success: false,
-      error: 'Failed to fetch categories',
-      categories: [],
-    };
-  }
-}
-
-// Dashboard stats
-export async function getDashboardStats() {
-  try {
-    const [totalBlogs, publishedBlogs, draftBlogs, totalCategories] =
-      await Promise.all([
-        prisma.blog.count(),
-        prisma.blog.count({ where: { status: 'PUBLISHED' } }),
-        prisma.blog.count({ where: { status: 'DRAFT' } }),
-        prisma.blogCategory.count(),
-      ]);
-
-    const recentBlogs = await prisma.blog.findMany({
-      take: 5,
-      include: {
-        category: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    const categoriesWithCount = await prisma.blogCategory.findMany({
-      take: 5,
-      include: {
-        _count: {
-          select: {
-            blogs: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return {
-      success: true,
-      stats: {
-        totalBlogs,
-        publishedBlogs,
-        draftBlogs,
-        totalCategories,
-        recentBlogs,
-        categoriesWithCount,
-      },
-    };
-  } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    return { success: false, error: 'Failed to fetch dashboard stats' };
   }
 }

@@ -24,7 +24,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { getDashboardStats } from '@/lib/actions/blog';
+import { getDashboardStats } from '@/lib/server/blog';
 
 interface DashboardStats {
   totalBlogs: number;
@@ -62,7 +62,7 @@ export default function DashboardPage() {
         } else {
           toast.error('Failed to load dashboard stats');
         }
-      } catch (error) {
+      } catch {
         toast.error('Failed to load dashboard stats');
       } finally {
         setIsLoading(false);
@@ -148,7 +148,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back! Here's what's happening with your blog.
+            Welcome back! Here&apos;s what&apos;s happening with your blog.
           </p>
         </div>
         <Button asChild>

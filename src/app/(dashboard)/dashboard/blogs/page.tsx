@@ -14,7 +14,7 @@ import {
 import { format } from 'date-fns';
 import { ArrowUpDown, Edit, Eye, Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   AlertDialog,
@@ -47,9 +47,9 @@ import {
 } from '@/components/ui/table';
 import { toast } from 'sonner';
 
-import { deleteBlog, getBlogs } from '@/lib/actions/blog';
+import { deleteBlog } from '@/lib/actions/blog';
+import { getBlogs } from '@/lib/server/blog';
 import type { Blog } from '@/lib/types/blog';
-import { useEffect } from 'react';
 
 export default function BlogsPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -59,12 +59,7 @@ export default function BlogsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
-  // Fetch blogs on component mount and when search/filter changes
-  useEffect(() => {
-    fetchBlogs();
-  }, [globalFilter]);
-
-  const fetchBlogs = async () => {
+  const fetchBlogs = useCallback(async () => {
     try {
       setIsLoading(true);
       const result = await getBlogs(globalFilter);
@@ -73,29 +68,37 @@ export default function BlogsPage() {
       } else {
         toast.error(result.error || 'Failed to fetch blogs');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to fetch blogs');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [globalFilter]);
 
-  const handleDeleteBlog = async (blogId: string) => {
-    try {
-      setIsDeleting(blogId);
-      const result = await deleteBlog(blogId);
-      if (result.success) {
-        setBlogs(blogs.filter(blog => blog.id !== blogId));
-        toast.success('Blog deleted successfully');
-      } else {
-        toast.error(result.error || 'Failed to delete blog');
+  const handleDeleteBlog = useCallback(
+    async (blogId: string) => {
+      try {
+        setIsDeleting(blogId);
+        const result = await deleteBlog(blogId);
+        if (result.success) {
+          setBlogs(blogs.filter(blog => blog.id !== blogId));
+          toast.success('Blog deleted successfully');
+        } else {
+          toast.error(result.error || 'Failed to delete blog');
+        }
+      } catch {
+        toast.error('Failed to delete blog');
+      } finally {
+        setIsDeleting(null);
       }
-    } catch (error) {
-      toast.error('Failed to delete blog');
-    } finally {
-      setIsDeleting(null);
-    }
-  };
+    },
+    [blogs]
+  );
+
+  // Fetch blogs on component mount and when search/filter changes
+  useEffect(() => {
+    fetchBlogs();
+  }, [fetchBlogs]);
 
   const columns: ColumnDef<Blog>[] = useMemo(
     () => [
@@ -196,8 +199,8 @@ export default function BlogsPage() {
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete
-                    the blog "{row.original.title}" and remove all associated
-                    data from Cloudinary.
+                    the blog &quot;{row.original.title}&quot; and remove all
+                    associated data from Cloudinary.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -218,7 +221,7 @@ export default function BlogsPage() {
         ),
       },
     ],
-    []
+    [isDeleting, handleDeleteBlog]
   );
 
   const table = useReactTable({

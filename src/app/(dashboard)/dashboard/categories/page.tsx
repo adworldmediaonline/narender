@@ -14,7 +14,7 @@ import {
 import { format } from 'date-fns';
 import { ArrowUpDown, Edit, Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   AlertDialog,
@@ -47,9 +47,9 @@ import {
 } from '@/components/ui/table';
 import { toast } from 'sonner';
 
-import { deleteCategory, getCategories } from '@/lib/actions/blog';
+import { deleteCategory } from '@/lib/actions/blog';
+import { getCategories } from '@/lib/server/blog';
 import type { BlogCategory } from '@/lib/types/blog';
-import { useEffect } from 'react';
 
 export default function CategoriesPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -59,12 +59,7 @@ export default function CategoriesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
-  // Fetch categories on component mount and when search changes
-  useEffect(() => {
-    fetchCategories();
-  }, [globalFilter]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setIsLoading(true);
       const result = await getCategories(globalFilter);
@@ -73,29 +68,37 @@ export default function CategoriesPage() {
       } else {
         toast.error(result.error || 'Failed to fetch categories');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to fetch categories');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [globalFilter]);
 
-  const handleDeleteCategory = async (categoryId: string) => {
-    try {
-      setIsDeleting(categoryId);
-      const result = await deleteCategory(categoryId);
-      if (result.success) {
-        setCategories(categories.filter(cat => cat.id !== categoryId));
-        toast.success('Category deleted successfully');
-      } else {
-        toast.error(result.error || 'Failed to delete category');
+  const handleDeleteCategory = useCallback(
+    async (categoryId: string) => {
+      try {
+        setIsDeleting(categoryId);
+        const result = await deleteCategory(categoryId);
+        if (result.success) {
+          setCategories(categories.filter(cat => cat.id !== categoryId));
+          toast.success('Category deleted successfully');
+        } else {
+          toast.error(result.error || 'Failed to delete category');
+        }
+      } catch {
+        toast.error('Failed to delete category');
+      } finally {
+        setIsDeleting(null);
       }
-    } catch (error) {
-      toast.error('Failed to delete category');
-    } finally {
-      setIsDeleting(null);
-    }
-  };
+    },
+    [categories]
+  );
+
+  // Fetch categories on component mount and when search changes
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const columns: ColumnDef<BlogCategory>[] = useMemo(
     () => [
@@ -191,9 +194,9 @@ export default function CategoriesPage() {
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete
-                    the category "{row.original.name}" and remove its banner
-                    image from Cloudinary. Make sure no blogs are using this
-                    category.
+                    the category &quot;{row.original.name}&quot; and remove its
+                    banner image from Cloudinary. Make sure no blogs are using
+                    this category.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -214,7 +217,7 @@ export default function CategoriesPage() {
         ),
       },
     ],
-    []
+    [isDeleting, handleDeleteCategory]
   );
 
   const table = useReactTable({

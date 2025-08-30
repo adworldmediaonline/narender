@@ -88,7 +88,7 @@ export default function ForgetPasswordPage() {
                   Check Your Email
                 </h2>
                 <p className="text-sm text-muted-foreground mt-2">
-                  We've sent a password reset code to your email address. Please
+                  We&apos;ve sent a password reset code to your email address. Please
                   check your inbox and follow the instructions.
                 </p>
               </div>
@@ -110,7 +110,7 @@ export default function ForgetPasswordPage() {
             Reset Password
           </CardTitle>
           <CardDescription className="text-muted-foreground">
-            Enter your email address and we'll send you a reset code
+            Enter your email address and we&apos;ll send you a reset code
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -143,7 +143,7 @@ export default function ForgetPasswordPage() {
                       </div>
                     </FormControl>
                     <FormDescription className="text-xs">
-                      We'll send a verification code to this email
+                      We&apos;ll send a verification code to this email
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

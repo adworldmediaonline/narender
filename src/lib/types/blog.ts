@@ -1,63 +1,52 @@
-export type BlogStatus = 'DRAFT' | 'PUBLISHED';
+import { Prisma } from '@prisma/client';
 
-export interface BlogImage {
+// Use Prisma's generated types
+export type Blog = Prisma.BlogGetPayload<{
+  include: {
+    category: true;
+  };
+}>;
+
+export type BlogCategory = Prisma.BlogCategoryGetPayload<{
+  include: {
+    _count: {
+      select: {
+        blogs: true;
+      };
+    };
+  };
+}>;
+
+// Cloudinary image interface compatible with Prisma JsonValue
+export interface CloudinaryImageData {
   public_id: string;
   url: string;
   alt: string;
+  [key: string]: string | number | boolean | undefined; // Index signature for JsonValue compatibility
 }
 
-export interface Blog {
-  id: string;
+// Form data types that extend Prisma types
+export type BlogFormData = {
   title: string;
   h1?: string;
   metaTitle?: string;
   metaDescription?: string;
-  metaKeywords: string[];
-  excerpt?: string;
-  description: string;
-  slug: string;
-  status: BlogStatus;
-  blogImage?: BlogImage;
-  bannerImage?: BlogImage;
-  imageAltText?: string;
-  categoryId: string;
-  category: BlogCategory;
-  tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface BlogCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  bannerImage?: BlogImage;
-  createdAt: Date;
-  updatedAt: Date;
-  _count?: {
-    blogs: number;
-  };
-}
-
-export interface BlogFormData {
-  title: string;
-  h1?: string;
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords: string[];
+  metaKeywords?: string[];
   excerpt?: string;
   description: string;
   status: BlogStatus;
-  blogImage?: File | BlogImage;
-  bannerImage?: File | BlogImage;
+  blogImage?: File | CloudinaryImageData;
+  bannerImage?: File | CloudinaryImageData;
   imageAltText?: string;
   categoryId: string;
-  tags: string[];
-}
+  tags?: string[];
+};
 
-export interface BlogCategoryFormData {
+export type BlogCategoryFormData = {
   name: string;
   description?: string;
-  bannerImage?: File | BlogImage;
-}
+  bannerImage?: File | CloudinaryImageData;
+};
+
+// Define BlogStatus enum locally since it's defined in Prisma schema
+export type BlogStatus = 'DRAFT' | 'PUBLISHED';

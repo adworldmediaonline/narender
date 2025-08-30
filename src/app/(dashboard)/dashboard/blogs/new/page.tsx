@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Save, Upload, X } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -28,14 +28,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  MultiSelector,
-  MultiSelectorContent,
-  MultiSelectorInput,
-  MultiSelectorItem,
-  MultiSelectorList,
-  MultiSelectorTrigger,
-} from '@/components/ui/multi-select';
+import { MultiSelect } from '@/components/ui/multi-select';
 import {
   Select,
   SelectContent,
@@ -44,7 +37,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { createBlog, getAllCategories } from '@/lib/actions/blog';
+import { createBlog } from '@/lib/actions/blog';
+import { getAllCategories } from '@/lib/server/blog';
+import type { BlogFormData } from '@/lib/types/blog';
+import Image from 'next/image';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -61,8 +57,6 @@ const formSchema = z.object({
   tags: z.string().array().default([]),
   imageAltText: z.string().optional(),
 });
-
-type FormData = z.infer<typeof formSchema>;
 
 // Categories will be loaded from the server
 
@@ -100,7 +94,7 @@ export default function NewBlogPage() {
         } else {
           toast.error('Failed to load categories');
         }
-      } catch (error) {
+      } catch {
         toast.error('Failed to load categories');
       } finally {
         setCategoriesLoading(false);
@@ -110,7 +104,7 @@ export default function NewBlogPage() {
     fetchCategories();
   }, []);
 
-  const form = useForm<FormData>({
+  const form = useForm<BlogFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
@@ -176,14 +170,14 @@ export default function NewBlogPage() {
     }
   };
 
-  async function onSubmit(values: FormData) {
+  async function onSubmit(values: BlogFormData) {
     try {
       setIsLoading(true);
 
       const blogData: BlogFormData = {
         ...values,
-        blogImage,
-        bannerImage,
+        blogImage: blogImage || undefined,
+        bannerImage: bannerImage || undefined,
         tags: selectedTags.map(tag => tag.value),
       };
 
@@ -195,7 +189,7 @@ export default function NewBlogPage() {
       } else {
         toast.error(result.error || 'Failed to create blog');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to create blog');
     } finally {
       setIsLoading(false);
@@ -481,32 +475,22 @@ export default function NewBlogPage() {
                   <FormField
                     control={form.control}
                     name="tags"
-                    render={({ field }) => (
+                    render={() => (
                       <FormItem>
                         <FormLabel>Tags</FormLabel>
                         <FormControl>
-                          <MultiSelector
-                            values={selectedTags}
-                            onValuesChange={setSelectedTags}
-                            loop
+                          <MultiSelect
+                            options={mockTags}
+                            selected={selectedTags.map(tag => tag.value)}
+                            onChange={selectedValues => {
+                              const selectedTagsData = mockTags.filter(tag =>
+                                selectedValues.includes(tag.value)
+                              );
+                              setSelectedTags(selectedTagsData);
+                            }}
+                            placeholder="Select tags..."
                             className="w-full"
-                          >
-                            <MultiSelectorTrigger>
-                              <MultiSelectorInput placeholder="Select tags..." />
-                            </MultiSelectorTrigger>
-                            <MultiSelectorContent>
-                              <MultiSelectorList>
-                                {mockTags.map(tag => (
-                                  <MultiSelectorItem
-                                    key={tag.value}
-                                    value={tag.value}
-                                  >
-                                    {tag.label}
-                                  </MultiSelectorItem>
-                                ))}
-                              </MultiSelectorList>
-                            </MultiSelectorContent>
-                          </MultiSelector>
+                          />
                         </FormControl>
                         <div className="flex flex-wrap gap-1 mt-2">
                           {selectedTags.map(tag => (
@@ -536,53 +520,47 @@ export default function NewBlogPage() {
                   <FormField
                     control={form.control}
                     name="blogImage"
-                    render={({ field }) => (
+                    render={() => (
                       <FormItem>
                         <FormLabel>Blog Image</FormLabel>
                         <FormControl>
-                          {blogImage ? (
-                            <div className="relative">
-                              <img
-                                src={URL.createObjectURL(blogImage)}
-                                alt="Blog preview"
-                                className="w-full h-32 object-cover rounded-md"
-                              />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                className="absolute top-2 right-2"
-                                onClick={() => removeImage('blog')}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-4 text-center">
-                              <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                              <p className="text-sm text-muted-foreground mb-2">
-                                Upload blog image
-                              </p>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={e => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleImageUpload(file, 'blog');
-                                }}
-                                className="hidden"
-                                id="blog-image"
-                              />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                asChild
-                              >
-                                <label htmlFor="blog-image">Choose File</label>
-                              </Button>
-                            </div>
-                          )}
+                          <div className="space-y-4">
+                            {form.watch('blogImage') &&
+                            form.watch('blogImage') instanceof File ? (
+                              <div className="relative">
+                                <Image
+                                  src={URL.createObjectURL(
+                                    form.watch('blogImage') as File
+                                  )}
+                                  alt="Preview"
+                                  width={300}
+                                  height={200}
+                                  className="rounded-lg object-cover"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  className="absolute top-2 right-2"
+                                  onClick={() =>
+                                    form.setValue('blogImage', undefined)
+                                  }
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            ) : null}
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  form.setValue('blogImage', file);
+                                }
+                              }}
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -593,55 +571,47 @@ export default function NewBlogPage() {
                   <FormField
                     control={form.control}
                     name="bannerImage"
-                    render={({ field }) => (
+                    render={() => (
                       <FormItem>
                         <FormLabel>Banner Image</FormLabel>
                         <FormControl>
-                          {bannerImage ? (
-                            <div className="relative">
-                              <img
-                                src={URL.createObjectURL(bannerImage)}
-                                alt="Banner preview"
-                                className="w-full h-32 object-cover rounded-md"
-                              />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                className="absolute top-2 right-2"
-                                onClick={() => removeImage('banner')}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-4 text-center">
-                              <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                              <p className="text-sm text-muted-foreground mb-2">
-                                Upload banner image
-                              </p>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={e => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleImageUpload(file, 'banner');
-                                }}
-                                className="hidden"
-                                id="banner-image"
-                              />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                asChild
-                              >
-                                <label htmlFor="banner-image">
-                                  Choose File
-                                </label>
-                              </Button>
-                            </div>
-                          )}
+                          <div className="space-y-4">
+                            {form.watch('bannerImage') &&
+                            form.watch('bannerImage') instanceof File ? (
+                              <div className="relative">
+                                <Image
+                                  src={URL.createObjectURL(
+                                    form.watch('bannerImage') as File
+                                  )}
+                                  alt="Preview"
+                                  width={400}
+                                  height={200}
+                                  className="rounded-lg object-cover"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  className="absolute top-2 right-2"
+                                  onClick={() =>
+                                    form.setValue('bannerImage', undefined)
+                                  }
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            ) : null}
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  form.setValue('bannerImage', file);
+                                }
+                              }}
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>

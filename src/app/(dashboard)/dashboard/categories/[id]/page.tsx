@@ -1,7 +1,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Loader2, Save, Upload, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -30,7 +31,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
-import { getCategoryById, updateCategory } from '@/lib/actions/blog';
+import { updateCategory } from '@/lib/actions/blog';
+import { getCategoryById } from '@/lib/server/blog';
 import type { BlogCategory, BlogCategoryFormData } from '@/lib/types/blog';
 
 const formSchema = z.object({
@@ -39,9 +41,8 @@ const formSchema = z.object({
     .min(1, 'Name is required')
     .min(2, 'Name must be at least 2 characters'),
   description: z.string().optional(),
+  bannerImage: z.any().optional(),
 });
-
-type FormData = z.infer<typeof formSchema>;
 
 export default function EditCategoryPage() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function EditCategoryPage() {
     null
   );
 
-  const form = useForm<FormData>({
+  const form = useForm<BlogCategoryFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
@@ -87,7 +88,7 @@ export default function EditCategoryPage() {
           name: category.name,
           description: category.description || '',
         });
-      } catch (error) {
+      } catch {
         toast.error('Failed to load category data');
         router.push('/dashboard/categories');
       } finally {
@@ -117,13 +118,13 @@ export default function EditCategoryPage() {
     setBannerImage(null);
   };
 
-  async function onSubmit(values: FormData) {
+  async function onSubmit(values: BlogCategoryFormData) {
     try {
       setIsLoading(true);
 
       const categoryData: BlogCategoryFormData = {
         ...values,
-        bannerImage,
+        bannerImage: bannerImage || undefined,
       };
 
       const result = await updateCategory(categoryId, categoryData);
@@ -134,7 +135,7 @@ export default function EditCategoryPage() {
       } else {
         toast.error(result.error || 'Failed to update category');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to update category');
     } finally {
       setIsLoading(false);
@@ -290,97 +291,82 @@ export default function EditCategoryPage() {
                   <FormField
                     control={form.control}
                     name="bannerImage"
-                    render={({ field }) => (
+                    render={() => (
                       <FormItem>
                         <FormLabel>Banner Image</FormLabel>
                         <FormControl>
-                          {currentCategory?.bannerImage && !bannerImage ? (
-                            <div className="space-y-4">
+                          <div className="space-y-4">
+                            {form.watch('bannerImage') &&
+                            form.watch('bannerImage') instanceof File ? (
                               <div className="relative">
-                                <img
-                                  src={currentCategory.bannerImage.url}
-                                  alt={currentCategory.bannerImage.alt}
-                                  className="w-full h-48 object-cover rounded-md"
+                                <Image
+                                  src={URL.createObjectURL(
+                                    form.watch('bannerImage') as File
+                                  )}
+                                  alt="Preview"
+                                  width={400}
+                                  height={200}
+                                  className="rounded-lg object-cover"
                                 />
                                 <Button
                                   type="button"
                                   variant="destructive"
                                   size="sm"
                                   className="absolute top-2 right-2"
-                                  onClick={removeImage}
+                                  onClick={() =>
+                                    form.setValue('bannerImage', undefined)
+                                  }
                                 >
-                                  <X className="h-4 w-4" />
+                                  Remove
                                 </Button>
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                <p className="font-medium">
-                                  Current banner image
-                                </p>
-                              </div>
-                            </div>
-                          ) : bannerImage ? (
-                            <div className="space-y-4">
+                            ) : currentCategory?.bannerImage &&
+                              typeof currentCategory.bannerImage === 'object' &&
+                              'url' in currentCategory.bannerImage ? (
                               <div className="relative">
-                                <img
-                                  src={URL.createObjectURL(bannerImage)}
-                                  alt="Category banner preview"
-                                  className="w-full h-48 object-cover rounded-md"
+                                <Image
+                                  src={
+                                    (
+                                      currentCategory.bannerImage as {
+                                        url: string;
+                                      }
+                                    ).url
+                                  }
+                                  alt={
+                                    (
+                                      currentCategory.bannerImage as {
+                                        alt: string;
+                                      }
+                                    ).alt || 'Banner image'
+                                  }
+                                  width={400}
+                                  height={200}
+                                  className="rounded-lg object-cover"
                                 />
                                 <Button
                                   type="button"
                                   variant="destructive"
                                   size="sm"
                                   className="absolute top-2 right-2"
-                                  onClick={removeImage}
+                                  onClick={() =>
+                                    form.setValue('bannerImage', undefined)
+                                  }
                                 >
-                                  <X className="h-4 w-4" />
+                                  Remove
                                 </Button>
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                <p className="font-medium">
-                                  {bannerImage.name}
-                                </p>
-                                <p className="text-xs">
-                                  {(bannerImage.size / 1024 / 1024).toFixed(2)}{' '}
-                                  MB
-                                </p>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-8 text-center">
-                              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                              <div className="space-y-2">
-                                <p className="text-sm font-medium">
-                                  Upload new banner image
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  PNG, JPG up to 5MB
-                                </p>
-                              </div>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={e => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleImageUpload(file);
-                                }}
-                                className="hidden"
-                                id="category-banner"
-                              />
-                              <div className="mt-4">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  asChild
-                                >
-                                  <label htmlFor="category-banner">
-                                    Choose File
-                                  </label>
-                                </Button>
-                              </div>
-                            </div>
-                          )}
+                            ) : null}
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  form.setValue('bannerImage', file);
+                                }
+                              }}
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
