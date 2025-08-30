@@ -20,8 +20,12 @@ export type BlogCategory = Prisma.BlogCategoryGetPayload<{
 // Cloudinary image interface compatible with Prisma JsonValue
 export interface CloudinaryImageData {
   public_id: string;
-  url: string;
-  alt: string;
+  secure_url: string;
+  url?: string; // Optional for backward compatibility
+  width: number;
+  height: number;
+  format: string;
+  alt?: string;
   [key: string]: string | number | boolean | undefined; // Index signature for JsonValue compatibility
 }
 

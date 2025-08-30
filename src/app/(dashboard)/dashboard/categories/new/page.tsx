@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Save } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -27,6 +26,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  ImageUpload,
+  ImageUploadContent,
+  ImageUploadError,
+  ImageUploadPreview,
+  ImageUploadTrigger,
+} from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { createCategory } from '@/lib/actions/blog';
@@ -191,52 +197,22 @@ export default function NewCategoryPage() {
                   render={() => (
                     <FormItem>
                       <FormControl>
-                        <div className="space-y-4">
-                          {/* New Image Preview */}
-                          {bannerImage && (
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">
-                                Image Preview
-                              </label>
-                              <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
-                                <Image
-                                  src={URL.createObjectURL(bannerImage)}
-                                  alt="New banner preview"
-                                  fill
-                                  className="object-cover"
-                                />
-                              </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setBannerImage(null)}
-                                disabled={isLoading}
-                              >
-                                Remove Image
-                              </Button>
-                            </div>
-                          )}
-
-                          {/* Upload Input */}
-                          <div className="space-y-2">
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={e => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  setBannerImage(file);
-                                }
-                              }}
-                              disabled={isLoading}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                              Upload a banner image for this category.
-                              Recommended: 1200x400px
-                            </p>
-                          </div>
-                        </div>
+                        <ImageUpload
+                          value={bannerImage}
+                          onChange={setBannerImage}
+                          onError={error =>
+                            form.setError('bannerImage', { message: error })
+                          }
+                          maxSize={5 * 1024 * 1024} // 5MB
+                          disabled={isLoading}
+                          className="w-full"
+                        >
+                          <ImageUploadPreview />
+                          <ImageUploadTrigger>
+                            <ImageUploadContent />
+                          </ImageUploadTrigger>
+                          <ImageUploadError />
+                        </ImageUpload>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
