@@ -120,161 +120,188 @@ export default function NewCategoryPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Category Details</CardTitle>
-            <CardDescription>
-              Basic information for your blog category.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
-                <div className="grid gap-4 md:grid-cols-2">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Category Details</CardTitle>
+                <CardDescription>
+                  Basic information for your blog category.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category Name *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter category name"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Display name for the category
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Slug (Auto-generated)
+                      </label>
+                      <Input
+                        value={slug}
+                        readOnly
+                        placeholder="category-slug"
+                        className="bg-muted"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        URL-friendly version of the name
+                      </p>
+                    </div>
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="name"
+                    name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category Name *</FormLabel>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter category name" {...field} />
+                          <Textarea
+                            placeholder="Describe what this category is about..."
+                            className="resize-none"
+                            rows={4}
+                            {...field}
+                          />
                         </FormControl>
                         <FormDescription>
-                          Display name for the category
+                          Optional description to help users understand the
+                          category
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      Slug (Auto-generated)
-                    </label>
-                    <Input
-                      value={slug}
-                      readOnly
-                      placeholder="category-slug"
-                      className="bg-muted"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      URL-friendly version of the name
-                    </p>
-                  </div>
                 </div>
+              </CardContent>
+            </Card>
 
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Describe what this category is about..."
-                          className="resize-none"
-                          rows={4}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Optional description to help users understand the
-                        category
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex gap-4">
-                  <Button type="submit" disabled={isLoading} size="lg">
-                    {isLoading ? (
-                      <>
-                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Create Category
-                      </>
+            <Card>
+              <CardHeader>
+                <CardTitle>Banner Image</CardTitle>
+                <CardDescription>
+                  Optional banner image for the category.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <FormField
+                    control={form.control}
+                    name="bannerImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Banner Image</FormLabel>
+                        <FormControl>
+                          {bannerImage ? (
+                            <div className="space-y-4">
+                              <div className="relative">
+                                <img
+                                  src={URL.createObjectURL(bannerImage)}
+                                  alt="Category banner preview"
+                                  className="w-full h-48 object-cover rounded-md"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  className="absolute top-2 right-2"
+                                  onClick={removeImage}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                <p className="font-medium">
+                                  {bannerImage.name}
+                                </p>
+                                <p className="text-xs">
+                                  {(bannerImage.size / 1024 / 1024).toFixed(2)}{' '}
+                                  MB
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-8 text-center">
+                              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                              <div className="space-y-2">
+                                <p className="text-sm font-medium">
+                                  Upload banner image
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  PNG, JPG up to 5MB
+                                </p>
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={e => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleImageUpload(file);
+                                }}
+                                className="hidden"
+                                id="category-banner"
+                              />
+                              <div className="mt-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  asChild
+                                >
+                                  <label htmlFor="category-banner">
+                                    Choose File
+                                  </label>
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Banner Image</CardTitle>
-            <CardDescription>
-              Optional banner image for the category.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {bannerImage ? (
-                <div className="space-y-4">
-                  <div className="relative">
-                    <img
-                      src={URL.createObjectURL(bannerImage)}
-                      alt="Category banner preview"
-                      className="w-full h-48 object-cover rounded-md"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={removeImage}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    <p className="font-medium">{bannerImage.name}</p>
-                    <p className="text-xs">
-                      {(bannerImage.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-8 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Upload banner image</p>
-                    <p className="text-xs text-muted-foreground">
-                      PNG, JPG up to 5MB
-                    </p>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageUpload(file);
-                    }}
-                    className="hidden"
-                    id="category-banner"
                   />
-                  <div className="mt-4">
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <label htmlFor="category-banner">Choose File</label>
-                    </Button>
-                  </div>
-                </div>
+                </Form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex gap-4 pt-6">
+            <Button type="submit" disabled={isLoading} size="lg">
+              {isLoading ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Create Category
+                </>
               )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+'use server';
+
 import { deleteFromCloudinary, uploadToCloudinary } from '@/lib/cloudinary';
 import prisma from '@/lib/prisma';
 import { BlogCategoryFormData, BlogFormData } from '@/lib/types/blog';

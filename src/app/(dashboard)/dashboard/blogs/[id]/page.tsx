@@ -308,70 +308,137 @@ export default function EditBlogPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Blog Content</CardTitle>
-              <CardDescription>
-                Update the main content and metadata for your blog post.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-6"
-                >
-                  <div className="grid gap-4 md:grid-cols-2">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Blog Content</CardTitle>
+                  <CardDescription>
+                    Update the main content and metadata for your blog post.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Title *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Enter blog title"
+                                disabled={isLoading}
+                                {...field}
+                                onBlur={handleAutoFillMeta}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              The main title of your blog post
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Slug (Auto-generated)
+                        </label>
+                        <Input
+                          value={slug}
+                          readOnly
+                          placeholder="blog-slug"
+                          className="bg-muted"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          URL-friendly version of your title
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="h1"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>H1 Heading</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="H1 heading for SEO"
+                                disabled={isLoading}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Status</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              disabled={isLoading}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="DRAFT">Draft</SelectItem>
+                                <SelectItem value="PUBLISHED">
+                                  Published
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
                     <FormField
                       control={form.control}
-                      name="title"
+                      name="excerpt"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Title *</FormLabel>
+                          <FormLabel>Excerpt</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Enter blog title"
+                            <Textarea
+                              placeholder="Brief summary of your blog post (for previews)"
+                              className="resize-none"
+                              rows={3}
                               disabled={isLoading}
                               {...field}
                               onBlur={handleAutoFillMeta}
                             />
                           </FormControl>
-                          <FormDescription>
-                            The main title of your blog post
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        Slug (Auto-generated)
-                      </label>
-                      <Input
-                        value={slug}
-                        readOnly
-                        placeholder="blog-slug"
-                        className="bg-muted"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        URL-friendly version of your title
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
-                      name="h1"
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>H1 Heading</FormLabel>
+                          <FormLabel>Content *</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="H1 heading for SEO"
+                            <Textarea
+                              placeholder="Write your blog content here..."
+                              className="resize-none min-h-[200px]"
                               disabled={isLoading}
                               {...field}
                             />
@@ -380,51 +447,329 @@ export default function EditBlogPage() {
                         </FormItem>
                       )}
                     />
-
-                    <FormField
-                      control={form.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Status</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            disabled={isLoading}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="DRAFT">Draft</SelectItem>
-                              <SelectItem value="PUBLISHED">
-                                Published
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-6">
+              {/* SEO Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">SEO Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="metaTitle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Meta Title</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="SEO title"
+                            disabled={isLoading}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          Recommended: 50-60 characters
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
-                    name="excerpt"
+                    name="metaDescription"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Excerpt</FormLabel>
+                        <FormLabel>Meta Description</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Brief summary of your blog post (for previews)"
+                            placeholder="SEO description"
                             className="resize-none"
-                            rows={3}
+                            rows={2}
                             disabled={isLoading}
                             {...field}
-                            onBlur={handleAutoFillMeta}
                           />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          Recommended: 150-160 characters
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="metaKeywords"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Meta Keywords</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="keyword1, keyword2, keyword3"
+                            disabled={isLoading}
+                            {...field}
+                            onChange={e => {
+                              const keywords = e.target.value
+                                .split(',')
+                                .map(k => k.trim())
+                                .filter(Boolean);
+                              field.onChange(keywords);
+                            }}
+                            value={field.value?.join(', ') || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Category & Tags */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Organization</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category *</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={isLoading}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.length === 0 ? (
+                              <SelectItem value="no-categories" disabled>
+                                No categories available
+                              </SelectItem>
+                            ) : (
+                              categories.map(category => (
+                                <SelectItem
+                                  key={category.id}
+                                  value={category.id}
+                                >
+                                  {category.name}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tags</label>
+                    <MultiSelector
+                      values={selectedTags}
+                      onValuesChange={setSelectedTags}
+                      loop
+                      className="w-full"
+                    >
+                      <MultiSelectorTrigger>
+                        <MultiSelectorInput placeholder="Select tags..." />
+                      </MultiSelectorTrigger>
+                      <MultiSelectorContent>
+                        <MultiSelectorList>
+                          {mockTags.map(tag => (
+                            <MultiSelectorItem
+                              key={tag.value}
+                              value={tag.value}
+                            >
+                              {tag.label}
+                            </MultiSelectorItem>
+                          ))}
+                        </MultiSelectorList>
+                      </MultiSelectorContent>
+                    </MultiSelector>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {selectedTags.map(tag => (
+                        <Badge
+                          key={tag.value}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {tag.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Images */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Images</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Blog Image */}
+                  <FormField
+                    control={form.control}
+                    name="blogImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Blog Image</FormLabel>
+                        <FormControl>
+                          {currentBlog?.blogImage && !blogImage ? (
+                            <div className="relative">
+                              <img
+                                src={currentBlog.blogImage.url}
+                                alt={currentBlog.blogImage.alt}
+                                className="w-full h-32 object-cover rounded-md"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-2 right-2"
+                                onClick={() => removeImage('blog')}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Current image
+                              </p>
+                            </div>
+                          ) : blogImage ? (
+                            <div className="relative">
+                              <img
+                                src={URL.createObjectURL(blogImage)}
+                                alt="Blog preview"
+                                className="w-full h-32 object-cover rounded-md"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-2 right-2"
+                                onClick={() => removeImage('blog')}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-4 text-center">
+                              <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                              <p className="text-sm text-muted-foreground mb-2">
+                                Upload new blog image
+                              </p>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={e => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleImageUpload(file, 'blog');
+                                }}
+                                className="hidden"
+                                id="blog-image"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                asChild
+                              >
+                                <label htmlFor="blog-image">Choose File</label>
+                              </Button>
+                            </div>
+                          )}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Banner Image */}
+                  <FormField
+                    control={form.control}
+                    name="bannerImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Banner Image</FormLabel>
+                        <FormControl>
+                          {currentBlog?.bannerImage && !bannerImage ? (
+                            <div className="relative">
+                              <img
+                                src={currentBlog.bannerImage.url}
+                                alt={currentBlog.bannerImage.alt}
+                                className="w-full h-32 object-cover rounded-md"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-2 right-2"
+                                onClick={() => removeImage('banner')}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Current image
+                              </p>
+                            </div>
+                          ) : bannerImage ? (
+                            <div className="relative">
+                              <img
+                                src={URL.createObjectURL(bannerImage)}
+                                alt="Banner preview"
+                                className="w-full h-32 object-cover rounded-md"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-2 right-2"
+                                onClick={() => removeImage('banner')}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-4 text-center">
+                              <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                              <p className="text-sm text-muted-foreground mb-2">
+                                Upload new banner image
+                              </p>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={e => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleImageUpload(file, 'banner');
+                                }}
+                                className="hidden"
+                                id="banner-image"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                asChild
+                              >
+                                <label htmlFor="banner-image">
+                                  Choose File
+                                </label>
+                              </Button>
+                            </div>
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -433,356 +778,47 @@ export default function EditBlogPage() {
 
                   <FormField
                     control={form.control}
-                    name="description"
+                    name="imageAltText"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Content *</FormLabel>
+                        <FormLabel>Image Alt Text</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Write your blog content here..."
-                            className="resize-none min-h-[200px]"
+                          <Input
+                            placeholder="Describe the images for accessibility"
                             disabled={isLoading}
                             {...field}
                           />
                         </FormControl>
+                        <FormDescription className="text-xs">
+                          Important for SEO and accessibility
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
 
-                  <div className="flex gap-4">
-                    <Button type="submit" disabled={isLoading} size="lg">
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Updating...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          Update Blog
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          {/* SEO Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">SEO Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="metaTitle"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Meta Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="SEO title"
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Recommended: 50-60 characters
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="metaDescription"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Meta Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="SEO description"
-                        className="resize-none"
-                        rows={2}
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Recommended: 150-160 characters
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="metaKeywords"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Meta Keywords</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="keyword1, keyword2, keyword3"
-                        disabled={isLoading}
-                        {...field}
-                        onChange={e => {
-                          const keywords = e.target.value
-                            .split(',')
-                            .map(k => k.trim())
-                            .filter(Boolean);
-                          field.onChange(keywords);
-                        }}
-                        value={field.value?.join(', ') || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Category & Tags */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Organization</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.length === 0 ? (
-                          <SelectItem value="" disabled>
-                            No categories available
-                          </SelectItem>
-                        ) : (
-                          categories.map(category => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tags</label>
-                <MultiSelector
-                  values={selectedTags}
-                  onValuesChange={setSelectedTags}
-                  loop
-                  className="w-full"
-                >
-                  <MultiSelectorTrigger>
-                    <MultiSelectorInput placeholder="Select tags..." />
-                  </MultiSelectorTrigger>
-                  <MultiSelectorContent>
-                    <MultiSelectorList>
-                      {mockTags.map(tag => (
-                        <MultiSelectorItem key={tag.value} value={tag.value}>
-                          {tag.label}
-                        </MultiSelectorItem>
-                      ))}
-                    </MultiSelectorList>
-                  </MultiSelectorContent>
-                </MultiSelector>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {selectedTags.map(tag => (
-                    <Badge
-                      key={tag.value}
-                      variant="secondary"
-                      className="text-xs"
-                    >
-                      {tag.label}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Images */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Images</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Blog Image */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Blog Image</label>
-                {currentBlog?.blogImage && !blogImage ? (
-                  <div className="relative">
-                    <img
-                      src={currentBlog.blogImage.url}
-                      alt={currentBlog.blogImage.alt}
-                      className="w-full h-32 object-cover rounded-md"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => removeImage('blog')}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Current image
-                    </p>
-                  </div>
-                ) : blogImage ? (
-                  <div className="relative">
-                    <img
-                      src={URL.createObjectURL(blogImage)}
-                      alt="Blog preview"
-                      className="w-full h-32 object-cover rounded-md"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => removeImage('blog')}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-4 text-center">
-                    <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Upload new blog image
-                    </p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(file, 'blog');
-                      }}
-                      className="hidden"
-                      id="blog-image"
-                    />
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <label htmlFor="blog-image">Choose File</label>
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Banner Image */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Banner Image</label>
-                {currentBlog?.bannerImage && !bannerImage ? (
-                  <div className="relative">
-                    <img
-                      src={currentBlog.bannerImage.url}
-                      alt={currentBlog.bannerImage.alt}
-                      className="w-full h-32 object-cover rounded-md"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => removeImage('banner')}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Current image
-                    </p>
-                  </div>
-                ) : bannerImage ? (
-                  <div className="relative">
-                    <img
-                      src={URL.createObjectURL(bannerImage)}
-                      alt="Banner preview"
-                      className="w-full h-32 object-cover rounded-md"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => removeImage('banner')}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-4 text-center">
-                    <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Upload new banner image
-                    </p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(file, 'banner');
-                      }}
-                      className="hidden"
-                      id="banner-image"
-                    />
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <label htmlFor="banner-image">Choose File</label>
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              <FormField
-                control={form.control}
-                name="imageAltText"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Image Alt Text</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Describe the images for accessibility"
-                        disabled={isLoading}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Important for SEO and accessibility
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+          {/* Submit Button */}
+          <div className="flex gap-4 pt-6">
+            <Button type="submit" disabled={isLoading} size="lg">
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Update Blog
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }
