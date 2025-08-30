@@ -9,6 +9,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   InputOTP,
   InputOTPGroup,
@@ -24,11 +25,14 @@ import { z } from 'zod';
 import { authClient } from '../../../lib/auth-client';
 
 const formSchema = z.object({
+  password: z.string().min(8, {
+    message: 'Password must be at least 8 characters.',
+  }),
   otp: z.string(),
 });
 
 // Separate component for the form that uses search params
-function VerifyEmailForm() {
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
   const router = useRouter();
@@ -37,16 +41,17 @@ function VerifyEmailForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      password: '',
       otp: '',
     },
   });
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
-    await authClient.emailOtp.verifyEmail(
+    await authClient.emailOtp.resetPassword(
       {
         email: email || '', // required
         otp: values.otp, // required
+        password: values.password, // required
       },
       {
         onRequest: () => {
@@ -54,7 +59,7 @@ function VerifyEmailForm() {
         },
         onSuccess: () => {
           setIsLoading(false);
-          router.push('/dashboard');
+          router.push('/sign-in');
         },
         onError: ctx => {
           setIsLoading(false);
@@ -75,6 +80,20 @@ function VerifyEmailForm() {
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-8 max-w-3xl mx-auto py-10"
       >
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input placeholder="********" {...field} type="password" />
+              </FormControl>
+              <FormDescription>This is your password.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-4">
             <FormField
@@ -109,7 +128,7 @@ function VerifyEmailForm() {
         </div>
         {error && <p className="text-red-500">{error}</p>}
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Submitting...' : 'Submit'}
+          {isLoading ? 'Updating Password...' : 'Update Password'}
         </Button>
       </form>
     </Form>
@@ -117,7 +136,7 @@ function VerifyEmailForm() {
 }
 
 // Loading component for Suspense fallback
-function VerifyEmailLoading() {
+function ResetPasswordLoading() {
   return (
     <div className="space-y-8 max-w-3xl mx-auto py-10">
       <div className="grid grid-cols-12 gap-4">
@@ -142,10 +161,10 @@ function VerifyEmailLoading() {
 }
 
 // Main page component with Suspense boundary
-export default function VerifyEmailOTPPage() {
+export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<VerifyEmailLoading />}>
-      <VerifyEmailForm />
+    <Suspense fallback={<ResetPasswordLoading />}>
+      <ResetPasswordForm />
     </Suspense>
   );
 }

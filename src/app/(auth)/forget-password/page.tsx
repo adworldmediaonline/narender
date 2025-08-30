@@ -24,12 +24,9 @@ const formSchema = z.object({
   email: z.email({
     message: 'Invalid email address.',
   }),
-  password: z.string().min(8, {
-    message: 'Password must be at least 8 characters.',
-  }),
 });
 
-export default function SignInPage() {
+export default function ForgetPasswordPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,23 +34,22 @@ export default function SignInPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: '',
-      password: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await authClient.signIn.email(
+    await authClient.forgetPassword.emailOtp(
       {
         email: values.email,
-        password: values.password,
-        callbackURL: '/dashboard',
       },
       {
         onRequest: () => {
           setIsLoading(true);
         },
         onSuccess: () => {
-          router.push('/dashboard');
+          router.push(
+            `/reset-password?email=${encodeURIComponent(values.email)}`
+          );
           setIsLoading(false);
         },
         onError: ctx => {
@@ -68,10 +64,10 @@ export default function SignInPage() {
       <div className="w-full max-w-md">{error && <p>{error}</p>}</div>
       <div className="w-full max-w-md">
         <h1 className="text-2xl font-bold">
-          Sign In <Link href="/sign-up">Sign Up</Link>
+          Forget Password <Link href="/forget-password">Forget Password</Link>
         </h1>
         <p className="text-sm text-muted-foreground">
-          Sign in to your account to get started.
+          Forget password to your account to get started.
         </p>
       </div>
       <div className="w-full max-w-md">
@@ -91,23 +87,9 @@ export default function SignInPage() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input placeholder="********" {...field} type="password" />
-                  </FormControl>
-                  <FormDescription>This is your password.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Link href="/forget-password">Forget Password</Link>
+
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? 'Sending OTP...' : 'Send OTP'}
             </Button>
           </form>
         </Form>

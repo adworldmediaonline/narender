@@ -71,10 +71,9 @@ export const auth = betterAuth({
               break;
 
             default:
-              subject = 'Verification code';
-              message = 'Use this verification code';
-              actionText =
-                'Enter this code to complete the verification process.';
+              subject = 'Reset code';
+              message = 'Use this reset code';
+              actionText = 'Enter this code to complete the reset process.';
           }
 
           // Send email using reusable template
