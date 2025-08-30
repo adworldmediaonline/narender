@@ -47,7 +47,7 @@ const data = {
     },
     {
       title: 'Blog Management',
-      url: '#',
+      url: '/dashboard/blogs',
       icon: IconWriting,
       items: [
         {
@@ -62,7 +62,7 @@ const data = {
     },
     {
       title: 'Categories',
-      url: '#',
+      url: '/dashboard/categories',
       icon: IconCategory,
       items: [
         {

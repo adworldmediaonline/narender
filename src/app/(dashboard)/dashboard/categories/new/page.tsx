@@ -51,7 +51,6 @@ const formSchema = z.object({
 export default function NewCategoryPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [bannerImage, setBannerImage] = useState<File | null>(null);
 
   const form = useForm<BlogCategoryFormData>({
     resolver: zodResolver(formSchema),
@@ -71,7 +70,6 @@ export default function NewCategoryPage() {
 
       const categoryData: BlogCategoryFormData = {
         ...values,
-        bannerImage: bannerImage || undefined,
       };
 
       const result = await createCategory(categoryData);
@@ -194,15 +192,11 @@ export default function NewCategoryPage() {
                 <FormField
                   control={form.control}
                   name="bannerImage"
-                  render={() => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormControl>
                         <ImageUpload
-                          value={bannerImage}
-                          onChange={setBannerImage}
-                          onError={error =>
-                            form.setError('bannerImage', { message: error })
-                          }
+                          {...field}
                           maxSize={5 * 1024 * 1024} // 5MB
                           disabled={isLoading}
                           className="w-full"

@@ -45,7 +45,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { createBlog } from '@/lib/actions/blog';
-import type { BlogFormData } from '@/lib/types/blog';
+import type { CreateBlogFormData } from '@/lib/types/blog';
 import { toast } from 'sonner';
 
 const formSchema = z.object({
@@ -57,6 +57,12 @@ const formSchema = z.object({
   excerpt: z.string().optional(),
   description: z.string().min(1, 'Content is required'),
   status: z.enum(['DRAFT', 'PUBLISHED']),
+  blogImage: z.any().refine(file => file !== null && file !== undefined, {
+    message: 'Blog image is required',
+  }),
+  bannerImage: z.any().refine(file => file !== null && file !== undefined, {
+    message: 'Banner image is required',
+  }),
   categoryId: z.string().min(1, 'Category is required'),
   tags: z.string().array().optional().default([]),
   imageAltText: z.string().optional(),
@@ -80,13 +86,11 @@ interface NewBlogFormProps {
 export default function NewBlogForm({ categories }: NewBlogFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [blogImage, setBlogImage] = useState<File | null>(null);
-  const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [selectedTags, setSelectedTags] = useState<
     Array<{ value: string; label: string }>
   >([]);
 
-  const form = useForm<BlogFormData>({
+  const form = useForm<CreateBlogFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
@@ -97,6 +101,8 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
       excerpt: '',
       description: '',
       status: 'DRAFT',
+      blogImage: null,
+      bannerImage: null,
       categoryId: '',
       tags: [],
       imageAltText: '',
@@ -106,6 +112,8 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
   // Auto-generate slug from title
   const title = form.watch('title');
   const slug = title ? slugify(title, { lower: true, strict: true }) : '';
+
+  // No need for custom handlers - FormControl handles this automatically
 
   // Auto-generate meta fields from title and excerpt
   const handleAutoFillMeta = () => {
@@ -125,14 +133,13 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
     }
   };
 
-  async function onSubmit(values: BlogFormData) {
+  async function onSubmit(values: CreateBlogFormData) {
     try {
       setIsLoading(true);
 
-      const blogData: BlogFormData = {
+      // Form validation already ensures images are present
+      const blogData: CreateBlogFormData = {
         ...values,
-        blogImage: blogImage || undefined,
-        bannerImage: bannerImage || undefined,
         tags: selectedTags.map(tag => tag.value),
       };
 
@@ -474,16 +481,12 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
                   <FormField
                     control={form.control}
                     name="blogImage"
-                    render={() => (
+                    render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Blog Image</FormLabel>
+                        <FormLabel>Blog Image *</FormLabel>
                         <FormControl>
                           <ImageUpload
-                            value={blogImage}
-                            onChange={setBlogImage}
-                            onError={error =>
-                              form.setError('blogImage', { message: error })
-                            }
+                            {...field}
                             maxSize={5 * 1024 * 1024} // 5MB
                             disabled={isLoading}
                             className="w-full"
@@ -504,16 +507,12 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
                   <FormField
                     control={form.control}
                     name="bannerImage"
-                    render={() => (
+                    render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Banner Image</FormLabel>
+                        <FormLabel>Banner Image *</FormLabel>
                         <FormControl>
                           <ImageUpload
-                            value={bannerImage}
-                            onChange={setBannerImage}
-                            onError={error =>
-                              form.setError('bannerImage', { message: error })
-                            }
+                            {...field}
                             maxSize={5 * 1024 * 1024} // 5MB
                             disabled={isLoading}
                             className="w-full"

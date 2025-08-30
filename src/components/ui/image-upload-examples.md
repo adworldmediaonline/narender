@@ -15,6 +15,8 @@ A fully composable, accessible image upload component built following Shadcn UI 
 
 ## Basic Usage
 
+### Single Image Upload
+
 ```tsx
 import {
   ImageUpload,
@@ -24,59 +26,108 @@ import {
   ImageUploadError,
 } from '@/components/ui/image-upload';
 
-function BasicExample() {
-  const [file, setFile] = useState<File | null>(null);
-
+function SingleImageExample() {
   return (
-    <ImageUpload
-      value={file}
-      onChange={setFile}
-      onError={error => console.log(error)}
-      maxSize={5 * 1024 * 1024} // 5MB
-    >
-      <ImageUploadPreview />
-      <ImageUploadTrigger>
-        <ImageUploadContent />
-      </ImageUploadTrigger>
-      <ImageUploadError />
-    </ImageUpload>
+    <FormField
+      control={form.control}
+      name="image"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Profile Image</FormLabel>
+          <FormControl>
+            <ImageUpload
+              {...field}
+              maxSize={5 * 1024 * 1024} // 5MB
+            >
+              <ImageUploadPreview />
+              <ImageUploadTrigger>
+                <ImageUploadContent />
+              </ImageUploadTrigger>
+              <ImageUploadError />
+            </ImageUpload>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 }
 ```
 
-## With React Hook Form
+### Multiple Images Upload
 
 ```tsx
-import { useForm } from 'react-hook-form';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+function MultipleImagesExample() {
+  return (
+    <FormField
+      control={form.control}
+      name="gallery"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Image Gallery</FormLabel>
+          <FormControl>
+            <ImageUpload
+              {...field}
+              multiple
+              maxFiles={5}
+              maxSize={5 * 1024 * 1024}
+            >
+              <ImageUploadPreview />
+              <ImageUploadTrigger>
+                <ImageUploadContent />
+              </ImageUploadTrigger>
+              <ImageUploadError />
+            </ImageUpload>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+```
 
-function FormExample() {
-  const form = useForm();
-  const [image, setImage] = useState<File | null>(null);
+## Built-in Zod Validation
+
+The component works seamlessly with Zod validation - no extra setup needed!
+
+### Single Image Validation
+
+```tsx
+import { z } from 'zod';
+
+const formSchema = z.object({
+  profileImage: z
+    .any()
+    .refine(file => file !== null && file !== undefined, {
+      message: 'Profile image is required',
+    })
+    .refine(file => file instanceof File, {
+      message: 'Please upload a valid file',
+    })
+    .refine(file => file.size <= 5 * 1024 * 1024, {
+      message: 'File size must be less than 5MB',
+    }),
+});
+
+function ProfileForm() {
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      profileImage: null,
+    },
+  });
 
   return (
     <Form {...form}>
       <FormField
         control={form.control}
-        name="image"
-        render={() => (
+        name="profileImage"
+        render={({ field }) => (
           <FormItem>
-            <FormLabel>Upload Image</FormLabel>
+            <FormLabel>Profile Image *</FormLabel>
             <FormControl>
-              <ImageUpload
-                value={image}
-                onChange={setImage}
-                onError={error => form.setError('image', { message: error })}
-                maxSize={5 * 1024 * 1024}
-                disabled={form.formState.isSubmitting}
-              >
+              <ImageUpload {...field} maxSize={5 * 1024 * 1024}>
                 <ImageUploadPreview />
                 <ImageUploadTrigger>
                   <ImageUploadContent />
@@ -91,6 +142,73 @@ function FormExample() {
     </Form>
   );
 }
+```
+
+### Multiple Images Validation
+
+```tsx
+const gallerySchema = z.object({
+  gallery: z
+    .array(z.any())
+    .min(1, 'At least one image is required')
+    .max(5, 'Maximum 5 images allowed')
+    .refine(
+      files => files.every(file => file instanceof File),
+      'All items must be valid files'
+    )
+    .refine(
+      files => files.every(file => file.size <= 5 * 1024 * 1024),
+      'Each file must be less than 5MB'
+    ),
+});
+
+function GalleryForm() {
+  const form = useForm({
+    resolver: zodResolver(gallerySchema),
+    defaultValues: {
+      gallery: [],
+    },
+  });
+
+  return (
+    <FormField
+      control={form.control}
+      name="gallery"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Image Gallery *</FormLabel>
+          <FormControl>
+            <ImageUpload
+              {...field}
+              multiple
+              maxFiles={5}
+              maxSize={5 * 1024 * 1024}
+            >
+              <ImageUploadPreview />
+              <ImageUploadTrigger>
+                <ImageUploadContent />
+              </ImageUploadTrigger>
+              <ImageUploadError />
+            </ImageUpload>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+```
+
+### Optional Images
+
+```tsx
+const optionalImageSchema = z.object({
+  avatar: z
+    .any()
+    .nullable()
+    .optional()
+    .refine(file => !file || file instanceof File, 'Must be a valid file'),
+});
 ```
 
 ## Variants

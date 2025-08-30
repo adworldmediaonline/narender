@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
+// No need for form field hooks - FormControl handles this via Slot
+
 // Types
 interface CloudinaryImageData {
   public_id: string;
@@ -47,17 +49,24 @@ const imageUploadVariants = cva(
   }
 );
 
-// Component interfaces
+// Single/Multiple file types
+type SingleFile = File | CloudinaryImageData | null;
+type MultipleFiles = (File | CloudinaryImageData)[] | null;
+type FileValue = SingleFile | MultipleFiles;
+
+// Component interfaces - following Shadcn pattern exactly
 interface ImageUploadRootProps
   extends Omit<React.ComponentProps<'div'>, 'onChange' | 'onError'>,
     VariantProps<typeof imageUploadVariants> {
-  value?: File | CloudinaryImageData | null;
-  onChange: (file: File | null) => void;
-  onError?: (error: string) => void;
+  value?: FileValue;
+  onChange?: (value: FileValue) => void;
+  onUploadError?: (error: string) => void; // Renamed to avoid conflict
   maxSize?: number;
   accept?: Record<string, string[]>;
-  disabled?: boolean;
   multiple?: boolean;
+  maxFiles?: number; // For multiple uploads
+  name?: string;
+  disabled?: boolean;
 }
 
 interface ImageUploadTriggerProps extends React.ComponentProps<'div'> {
@@ -68,7 +77,8 @@ type ImageUploadContentProps = React.ComponentProps<'div'>;
 
 interface ImageUploadPreviewProps extends React.ComponentProps<'div'> {
   file?: File | CloudinaryImageData;
-  onRemove?: () => void;
+  files?: (File | CloudinaryImageData)[];
+  onRemove?: (index?: number) => void;
   showRemove?: boolean;
 }
 
@@ -83,13 +93,14 @@ interface ImageUploadErrorProps extends React.ComponentProps<'div'> {
 
 // Context for sharing state between components
 interface ImageUploadContextValue {
-  value?: File | CloudinaryImageData | null;
-  onChange: (file: File | null) => void;
-  onError?: (error: string) => void;
+  value?: FileValue;
+  onChange?: (value: FileValue) => void;
+  onUploadError?: (error: string) => void;
   maxSize: number;
   accept: Record<string, string[]>;
   disabled: boolean;
   multiple: boolean;
+  maxFiles: number;
   isDragActive: boolean;
   isValid: boolean;
   error?: string;
@@ -116,13 +127,15 @@ function ImageUploadRoot({
   size,
   value,
   onChange,
-  onError,
+  onUploadError,
   maxSize = 5 * 1024 * 1024, // 5MB default
   accept = {
     'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
   },
   disabled = false,
   multiple = false,
+  maxFiles = multiple ? 10 : 1,
+  name,
   children,
   ...props
 }: ImageUploadRootProps) {
@@ -131,9 +144,9 @@ function ImageUploadRoot({
   const handleError = React.useCallback(
     (errorMessage: string) => {
       setError(errorMessage);
-      onError?.(errorMessage);
+      onUploadError?.(errorMessage);
     },
-    [onError]
+    [onUploadError]
   );
 
   const onDrop = React.useCallback(
@@ -160,10 +173,25 @@ function ImageUploadRoot({
 
       // Handle accepted files
       if (acceptedFiles.length > 0) {
-        onChange(acceptedFiles[0]);
+        if (multiple) {
+          // Multiple files mode
+          const currentFiles = Array.isArray(value) ? value : [];
+          const newFiles = [...currentFiles, ...acceptedFiles];
+
+          // Check max files limit
+          if (newFiles.length > maxFiles) {
+            handleError(`Maximum ${maxFiles} files allowed`);
+            return;
+          }
+
+          onChange?.(newFiles);
+        } else {
+          // Single file mode
+          onChange?.(acceptedFiles[0]);
+        }
       }
     },
-    [onChange, handleError, maxSize]
+    [onChange, handleError, maxSize, multiple, value, maxFiles]
   );
 
   const {
@@ -177,6 +205,7 @@ function ImageUploadRoot({
     accept,
     maxSize,
     multiple,
+    maxFiles: multiple ? maxFiles : 1,
     disabled,
   });
 
@@ -184,22 +213,24 @@ function ImageUploadRoot({
   const state = React.useMemo(() => {
     if (stateProp) return stateProp;
     if (disabled) return 'disabled';
+    if (error) return 'reject';
     if (isDragReject) return 'reject';
     if (isDragAccept) return 'accept';
     if (isDragActive) return 'active';
     return 'idle';
-  }, [stateProp, disabled, isDragActive, isDragAccept, isDragReject]);
+  }, [stateProp, disabled, isDragActive, isDragAccept, isDragReject, error]);
 
   const isValid = !error && (isDragAccept || !isDragActive);
 
   const contextValue: ImageUploadContextValue = {
     value,
     onChange,
-    onError: handleError,
+    onUploadError: handleError,
     maxSize,
     accept,
     disabled,
     multiple,
+    maxFiles,
     isDragActive,
     isValid,
     error,
@@ -211,10 +242,15 @@ function ImageUploadRoot({
         {...getRootProps()}
         data-slot="image-upload"
         data-state={state}
-        className={cn(imageUploadVariants({ state, size }), className)}
+        className={cn(
+          imageUploadVariants({ state, size }),
+          // Add validation styles similar to Input component
+          'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
+          className
+        )}
         {...props}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} name={name} />
         {children}
       </div>
     </ImageUploadContext.Provider>
@@ -250,12 +286,29 @@ function ImageUploadContent({
   children,
   ...props
 }: ImageUploadContentProps) {
-  const { isDragActive, maxSize, accept } = useImageUpload();
+  const { isDragActive, maxSize, accept, multiple, maxFiles } =
+    useImageUpload();
 
   const acceptedFormats = Object.values(accept)
     .flat()
     .map(ext => ext.replace('.', '').toUpperCase())
     .join(', ');
+
+  const getUploadText = () => {
+    if (isDragActive) {
+      return multiple ? 'Drop your images here' : 'Drop your image here';
+    }
+    return multiple
+      ? 'Drag & drop images here, or click to select'
+      : 'Drag & drop an image here, or click to select';
+  };
+
+  const getSubText = () => {
+    const sizeText = `Max size: ${Math.round(maxSize / (1024 * 1024))}MB`;
+    const formatText = `Formats: ${acceptedFormats}`;
+    const limitText = multiple ? ` • Max ${maxFiles} files` : '';
+    return `${sizeText} • ${formatText}${limitText}`;
+  };
 
   return (
     <div
@@ -273,15 +326,8 @@ function ImageUploadContent({
             )}
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium">
-              {isDragActive
-                ? 'Drop your image here'
-                : 'Drag & drop an image here, or click to select'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Max size: {Math.round(maxSize / (1024 * 1024))}MB • Formats:{' '}
-              {acceptedFormats}
-            </p>
+            <p className="text-sm font-medium">{getUploadText()}</p>
+            <p className="text-xs text-muted-foreground">{getSubText()}</p>
           </div>
         </>
       )}
@@ -289,70 +335,97 @@ function ImageUploadContent({
   );
 }
 
-// Preview component for showing selected/current image
+// Preview component for showing selected/current image(s)
 function ImageUploadPreview({
   className,
   file,
+  files,
   onRemove,
   showRemove = true,
   ...props
 }: ImageUploadPreviewProps) {
-  const { value, onChange } = useImageUpload();
-  const currentFile = file || value;
+  const { value, onChange, multiple } = useImageUpload();
 
-  if (!currentFile) return null;
+  // Determine what to display
+  const displayFiles =
+    files ||
+    (file ? [file] : Array.isArray(value) ? value : value ? [value] : []);
 
-  const isFile = currentFile instanceof File;
-  const isCloudinaryImage =
-    currentFile &&
-    typeof currentFile === 'object' &&
-    'secure_url' in currentFile;
+  if (!displayFiles.length) return null;
 
-  const imageUrl = isFile
-    ? URL.createObjectURL(currentFile)
-    : isCloudinaryImage
-    ? (currentFile as CloudinaryImageData).secure_url ||
-      (currentFile as CloudinaryImageData).url ||
-      ''
-    : '';
-
-  const altText = isCloudinaryImage
-    ? (currentFile as CloudinaryImageData).alt || 'Preview'
-    : 'Preview';
-
-  const handleRemove = () => {
+  const handleRemove = (index?: number) => {
     if (onRemove) {
-      onRemove();
+      onRemove(index);
+    } else if (multiple && Array.isArray(value) && typeof index === 'number') {
+      // Remove specific file from array
+      const newFiles = value.filter((_, i) => i !== index);
+      onChange?.(newFiles.length ? newFiles : null);
     } else {
-      onChange(null);
+      // Single file or remove all
+      onChange?.(null);
     }
   };
 
-  return (
-    <div
-      data-slot="image-upload-preview"
-      className={cn('relative w-full', className)}
-      {...props}
-    >
-      <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-muted">
+  const renderSingleImage = (
+    item: File | CloudinaryImageData,
+    index: number
+  ) => {
+    const isFile = item instanceof File;
+    const isCloudinaryImage =
+      item && typeof item === 'object' && 'secure_url' in item;
+
+    const imageUrl = isFile
+      ? URL.createObjectURL(item)
+      : isCloudinaryImage
+      ? (item as CloudinaryImageData).secure_url ||
+        (item as CloudinaryImageData).url ||
+        ''
+      : '';
+
+    const altText = isCloudinaryImage
+      ? (item as CloudinaryImageData).alt || 'Preview'
+      : 'Preview';
+
+    return (
+      <div
+        key={index}
+        className={cn(
+          'relative aspect-video overflow-hidden rounded-lg border bg-muted',
+          multiple ? 'w-24 h-24' : 'w-full'
+        )}
+      >
         <Image src={imageUrl} alt={altText} fill className="object-cover" />
         {showRemove && (
           <Button
             type="button"
             variant="destructive"
             size="icon"
-            className="absolute top-2 right-2 h-8 w-8"
-            onClick={handleRemove}
+            className="absolute top-1 right-1 h-6 w-6"
+            onClick={() => handleRemove(multiple ? index : undefined)}
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </Button>
         )}
+        {isFile && (
+          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+            {item.name}
+          </div>
+        )}
       </div>
-      {isFile && (
-        <div className="mt-2 text-xs text-muted-foreground">
-          {currentFile.name} ({Math.round(currentFile.size / 1024)}KB)
-        </div>
+    );
+  };
+
+  return (
+    <div
+      data-slot="image-upload-preview"
+      className={cn(
+        'w-full',
+        multiple ? 'flex flex-wrap gap-2' : '',
+        className
       )}
+      {...props}
+    >
+      {displayFiles.map((item, index) => renderSingleImage(item, index))}
     </div>
   );
 }
@@ -388,6 +461,8 @@ function ImageUploadError({
   ...props
 }: ImageUploadErrorProps) {
   const { error: contextError } = useImageUpload();
+
+  // Priority: explicit error prop > context error
   const error = errorProp || contextError;
 
   if (!error) return null;

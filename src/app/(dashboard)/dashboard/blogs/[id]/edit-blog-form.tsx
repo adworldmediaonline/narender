@@ -40,7 +40,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 import { updateBlog } from '@/lib/actions/blog';
-import type { Blog, BlogFormData } from '@/lib/types/blog';
+import type { Blog, EditBlogFormData } from '@/lib/types/blog';
 import Image from 'next/image';
 
 const formSchema = z.object({
@@ -52,6 +52,14 @@ const formSchema = z.object({
   excerpt: z.string().optional(),
   description: z.string().min(1, 'Content is required'),
   status: z.enum(['DRAFT', 'PUBLISHED']),
+  blogImage: z
+    .any()
+    .nullable() // Allow null for edit form (can keep existing image)
+    .optional(),
+  bannerImage: z
+    .any()
+    .nullable() // Allow null for edit form (can keep existing image)
+    .optional(),
   categoryId: z.string().min(1, 'Category is required'),
   tags: z.string().array().optional().default([]),
   imageAltText: z.string().optional(),
@@ -87,7 +95,7 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
     }))
   );
 
-  const form = useForm<BlogFormData>({
+  const form = useForm<EditBlogFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: blog.title,
@@ -126,11 +134,11 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
     }
   };
 
-  async function onSubmit(values: BlogFormData) {
+  async function onSubmit(values: EditBlogFormData) {
     try {
       setIsLoading(true);
 
-      const blogData: BlogFormData = {
+      const blogData: EditBlogFormData = {
         ...values,
         blogImage: blogImage || undefined,
         bannerImage: bannerImage || undefined,

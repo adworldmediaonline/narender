@@ -29,8 +29,8 @@ export interface CloudinaryImageData {
   [key: string]: string | number | boolean | undefined; // Index signature for JsonValue compatibility
 }
 
-// Form data types that extend Prisma types
-export type BlogFormData = {
+// Base form data type
+type BaseFormData = {
   title: string;
   h1?: string;
   metaTitle?: string;
@@ -39,11 +39,27 @@ export type BlogFormData = {
   excerpt?: string;
   description: string;
   status: BlogStatus;
-  blogImage?: File | CloudinaryImageData;
-  bannerImage?: File | CloudinaryImageData;
   imageAltText?: string;
   categoryId: string;
   tags?: string[];
+};
+
+// Create form data - images are required
+export type CreateBlogFormData = BaseFormData & {
+  blogImage: File | CloudinaryImageData | null;
+  bannerImage: File | CloudinaryImageData | null;
+};
+
+// Edit form data - images are optional (can keep existing)
+export type EditBlogFormData = BaseFormData & {
+  blogImage?: File | CloudinaryImageData | null;
+  bannerImage?: File | CloudinaryImageData | null;
+};
+
+// General blog form data type (for compatibility)
+export type BlogFormData = BaseFormData & {
+  blogImage?: File | CloudinaryImageData | null;
+  bannerImage?: File | CloudinaryImageData | null;
 };
 
 export type BlogCategoryFormData = {
