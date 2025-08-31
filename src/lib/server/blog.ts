@@ -186,3 +186,99 @@ export async function getAllCategories() {
     };
   }
 }
+
+// Frontend blog queries
+export async function getBlogBySlug(slug: string) {
+  try {
+    const blog = await prisma.blog.findUnique({
+      where: {
+        slug,
+        status: 'PUBLISHED', // Only show published blogs
+      },
+      include: {
+        category: true,
+      },
+    });
+
+    return blog;
+  } catch (error) {
+    console.error('Error fetching blog by slug:', error);
+    return null;
+  }
+}
+
+export async function getCategoryBySlug(slug: string) {
+  try {
+    const category = await prisma.blogCategory.findUnique({
+      where: { slug },
+      include: {
+        _count: {
+          select: {
+            blogs: {
+              where: {
+                status: 'PUBLISHED', // Only count published blogs
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return category;
+  } catch (error) {
+    console.error('Error fetching category by slug:', error);
+    return null;
+  }
+}
+
+export async function getBlogsByCategory(categoryId: string) {
+  try {
+    const blogs = await prisma.blog.findMany({
+      where: {
+        categoryId,
+        status: 'PUBLISHED', // Only show published blogs
+      },
+      include: {
+        category: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return blogs;
+  } catch (error) {
+    console.error('Error fetching blogs by category:', error);
+    return [];
+  }
+}
+
+export async function getRelatedBlogs(
+  categoryId: string,
+  excludeBlogId: string,
+  limit: number = 3
+) {
+  try {
+    const relatedBlogs = await prisma.blog.findMany({
+      where: {
+        categoryId,
+        status: 'PUBLISHED',
+        id: {
+          not: excludeBlogId, // Exclude the current blog
+        },
+      },
+      include: {
+        category: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+    });
+
+    return relatedBlogs;
+  } catch (error) {
+    console.error('Error fetching related blogs:', error);
+    return [];
+  }
+}

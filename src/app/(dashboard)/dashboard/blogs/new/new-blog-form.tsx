@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { MultiSelect } from '@/components/ui/multi-select';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import {
   Select,
   SelectContent,
@@ -55,7 +56,14 @@ const formSchema = z.object({
   metaDescription: z.string().optional(),
   metaKeywords: z.string().array().optional().default([]),
   excerpt: z.string().optional(),
-  description: z.string().min(1, 'Content is required'),
+  description: z
+    .string()
+    .min(1, 'Content is required')
+    .refine(html => {
+      // Remove HTML tags and check if there's actual content
+      const textContent = html.replace(/<[^>]*>/g, '').trim();
+      return textContent.length > 0;
+    }, 'Content cannot be empty'),
   status: z.enum(['DRAFT', 'PUBLISHED']),
   blogImage: z.any().refine(file => file !== null && file !== undefined, {
     message: 'Blog image is required',
@@ -304,11 +312,11 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
                         <FormItem>
                           <FormLabel>Content *</FormLabel>
                           <FormControl>
-                            <Textarea
-                              placeholder="Write your blog content here..."
-                              className="resize-none min-h-[200px]"
-                              disabled={isLoading}
+                            <RichTextEditor
                               {...field}
+                              placeholder="Write your blog content here..."
+                              size="lg"
+                              disabled={isLoading}
                             />
                           </FormControl>
                           <FormMessage />
