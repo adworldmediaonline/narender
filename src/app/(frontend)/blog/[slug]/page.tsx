@@ -196,9 +196,9 @@ export default async function BlogPage({ params }: BlogPageProps) {
           )}
 
           {/* Article Content */}
-          <div className="prose prose-lg max-w-none mb-8">
+          <div className="prose-tiptap mb-8">
             <div
-              className="leading-relaxed"
+              className="tiptap"
               dangerouslySetInnerHTML={{
                 __html: blog.description,
               }}
