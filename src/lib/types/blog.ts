@@ -41,7 +41,7 @@ type BaseFormData = {
   status: BlogStatus;
   imageAltText?: string;
   categoryId: string;
-  tags?: string[];
+  tags: string[];
 };
 
 // Create form data - images are required

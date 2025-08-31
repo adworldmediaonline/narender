@@ -9,7 +9,6 @@ import { useForm } from 'react-hook-form';
 import slugify from 'slugify';
 import { z } from 'zod';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -69,7 +68,7 @@ const formSchema = z.object({
     .nullable() // Allow null for edit form (can keep existing image)
     .optional(),
   categoryId: z.string().min(1, 'Category is required'),
-  tags: z.string().array().optional().default([]),
+  tags: z.string().array().min(1, 'At least one tag is required'),
   imageAltText: z.string().optional(),
 });
 
@@ -94,14 +93,6 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [blogImage, setBlogImage] = useState<File | null>(null);
   const [bannerImage, setBannerImage] = useState<File | null>(null);
-  const [selectedTags, setSelectedTags] = useState<
-    Array<{ value: string; label: string }>
-  >(
-    blog.tags.map(tag => ({
-      value: tag,
-      label: tag.charAt(0).toUpperCase() + tag.slice(1),
-    }))
-  );
 
   const form = useForm<EditBlogFormData>({
     resolver: zodResolver(formSchema),
@@ -150,7 +141,6 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
         ...values,
         blogImage: blogImage || undefined,
         bannerImage: bannerImage || undefined,
-        tags: selectedTags.map(tag => tag.value),
       };
 
       const result = await updateBlog(blog.id, blogData);
@@ -453,31 +443,28 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                     )}
                   />
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Tags</label>
-                    <MultiSelect
-                      options={mockTags}
-                      selected={selectedTags.map(tag => tag.value)}
-                      onChange={selectedValues => {
-                        const selectedTagsData = mockTags.filter(tag =>
-                          selectedValues.includes(tag.value)
-                        );
-                        setSelectedTags(selectedTagsData);
-                      }}
-                      placeholder="Select tags..."
-                    />
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {selectedTags.map(tag => (
-                        <Badge
-                          key={tag.value}
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {tag.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="tags"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tags</FormLabel>
+                        <FormControl>
+                          <MultiSelect
+                            options={mockTags}
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            placeholder="Select tags..."
+                            name={field.name}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Select relevant tags for your blog post.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
 

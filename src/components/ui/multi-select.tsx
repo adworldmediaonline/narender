@@ -14,19 +14,35 @@ interface Option {
 
 interface MultiSelectProps {
   options: Option[];
-  selected: string[];
-  onChange: (selected: string[]) => void;
+  value?: string[];
+  onValueChange?: (value: string[]) => void;
+  // Legacy props for backward compatibility
+  selected?: string[];
+  onChange?: (selected: string[]) => void;
   placeholder?: string;
   disabled?: boolean;
+  name?: string;
 }
 
 export function MultiSelect({
   options,
+  value,
+  onValueChange,
   selected,
   onChange,
   placeholder = 'Select options...',
   disabled = false,
+  name,
 }: MultiSelectProps) {
+  // Use new props if available, fall back to legacy props
+  const currentValue = React.useMemo(
+    () => value ?? selected ?? [],
+    [value, selected]
+  );
+  const handleValueChange = React.useMemo(
+    () => onValueChange ?? onChange ?? (() => {}),
+    [onValueChange, onChange]
+  );
   const inputRef = React.useRef<HTMLInputElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [open, setOpen] = React.useState(false);
@@ -54,9 +70,9 @@ export function MultiSelect({
 
   const handleUnselect = React.useCallback(
     (item: string) => {
-      onChange(selected.filter(i => i !== item));
+      handleValueChange(currentValue.filter(i => i !== item));
     },
-    [onChange, selected]
+    [handleValueChange, currentValue]
   );
 
   const handleKeyDown = React.useCallback(
@@ -64,8 +80,8 @@ export function MultiSelect({
       const input = inputRef.current;
       if (input) {
         if (e.key === 'Delete' || e.key === 'Backspace') {
-          if (input.value === '' && selected.length > 0) {
-            onChange(selected.slice(0, -1));
+          if (input.value === '' && currentValue.length > 0) {
+            handleValueChange(currentValue.slice(0, -1));
           }
         }
         if (e.key === 'Escape') {
@@ -78,7 +94,7 @@ export function MultiSelect({
         }
       }
     },
-    [onChange, selected, inputValue]
+    [handleValueChange, currentValue, inputValue]
   );
 
   // Filter options based on input value if there's any search input
@@ -87,11 +103,11 @@ export function MultiSelect({
   );
 
   const onValueChangeHandler = React.useCallback(
-    (value: string) => {
-      if (selected.includes(value)) {
-        onChange(selected.filter(item => item !== value));
+    (optionValue: string) => {
+      if (currentValue.includes(optionValue)) {
+        handleValueChange(currentValue.filter(item => item !== optionValue));
       } else {
-        onChange([...selected, value]);
+        handleValueChange([...currentValue, optionValue]);
       }
       setInputValue(''); // Clear input after selection
       // Keep the dropdown open for multiple selections
@@ -99,7 +115,7 @@ export function MultiSelect({
         inputRef.current.focus();
       }
     },
-    [onChange, selected]
+    [handleValueChange, currentValue]
   );
 
   return (
@@ -116,7 +132,7 @@ export function MultiSelect({
         }}
       >
         <div className="flex gap-1 flex-wrap">
-          {selected.map(item => {
+          {currentValue.map(item => {
             const option = options.find(opt => opt.value === item);
             if (!option) return null;
             return (
@@ -157,7 +173,7 @@ export function MultiSelect({
             }}
             onFocus={() => setOpen(true)}
             placeholder={
-              selected.length === 0
+              currentValue.length === 0
                 ? placeholder
                 : open
                 ? 'Type to search or press Escape to close...'
@@ -165,6 +181,7 @@ export function MultiSelect({
             }
             className="ml-2 bg-transparent outline-none placeholder:text-muted-foreground flex-1"
             disabled={disabled}
+            name={name}
           />
         </div>
       </div>
@@ -189,12 +206,12 @@ export function MultiSelect({
                     >
                       <div
                         className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary ${
-                          selected.includes(option.value)
+                          currentValue.includes(option.value)
                             ? 'bg-primary text-primary-foreground'
                             : 'opacity-50'
                         }`}
                       >
-                        {selected.includes(option.value) && (
+                        {currentValue.includes(option.value) && (
                           <svg
                             className="h-3 w-3"
                             fill="none"
