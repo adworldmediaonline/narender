@@ -21,6 +21,16 @@ import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -39,6 +49,7 @@ import {
   Bold,
   CheckSquare,
   Code,
+  FileText,
   Heading1,
   Heading2,
   Heading3,
@@ -143,6 +154,265 @@ function ToolbarButton({
         <p>{tooltip}</p>
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+// Context Menu component
+interface EditorContextMenuProps {
+  editor: Editor;
+  children: React.ReactNode;
+}
+
+function EditorContextMenu({ editor, children }: EditorContextMenuProps) {
+  const addImage = React.useCallback(() => {
+    const url = window.prompt('Enter image URL:');
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  }, [editor]);
+
+  const setLink = React.useCallback(() => {
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('Enter URL:', previousUrl);
+
+    if (url === null) return;
+
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }, [editor]);
+
+  const addHorizontalRule = React.useCallback(() => {
+    editor.chain().focus().setHorizontalRule().run();
+  }, [editor]);
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+      <ContextMenuContent className="w-64">
+        {/* Text Styles */}
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <Type className="h-4 w-4 mr-2" />
+            Text Style
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent>
+            <ContextMenuItem
+              onClick={() => editor.chain().focus().setParagraph().run()}
+              className={cn(editor.isActive('paragraph') && 'bg-accent')}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Normal Text
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              className={cn(editor.isActive('blockquote') && 'bg-accent')}
+            >
+              <Quote className="h-4 w-4 mr-2" />
+              Blockquote
+            </ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+
+        {/* Headings */}
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <Heading1 className="h-4 w-4 mr-2" />
+            Headings
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent>
+            <ContextMenuItem
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 1 }).run()
+              }
+              className={cn(
+                editor.isActive('heading', { level: 1 }) && 'bg-accent'
+              )}
+            >
+              <Heading1 className="h-4 w-4 mr-2" />
+              Heading 1
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 2 }).run()
+              }
+              className={cn(
+                editor.isActive('heading', { level: 2 }) && 'bg-accent'
+              )}
+            >
+              <Heading2 className="h-4 w-4 mr-2" />
+              Heading 2
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 3 }).run()
+              }
+              className={cn(
+                editor.isActive('heading', { level: 3 }) && 'bg-accent'
+              )}
+            >
+              <Heading3 className="h-4 w-4 mr-2" />
+              Heading 3
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 4 }).run()
+              }
+              className={cn(
+                editor.isActive('heading', { level: 4 }) && 'bg-accent'
+              )}
+            >
+              <Heading3 className="h-4 w-4 mr-2" />
+              Heading 4
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 5 }).run()
+              }
+              className={cn(
+                editor.isActive('heading', { level: 5 }) && 'bg-accent'
+              )}
+            >
+              <Heading3 className="h-4 w-4 mr-2" />
+              Heading 5
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 6 }).run()
+              }
+              className={cn(
+                editor.isActive('heading', { level: 6 }) && 'bg-accent'
+              )}
+            >
+              <Heading3 className="h-4 w-4 mr-2" />
+              Heading 6
+            </ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+
+        <ContextMenuSeparator />
+
+        {/* Text Formatting */}
+        <ContextMenuItem
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          disabled={!editor.can().chain().focus().toggleBold().run()}
+          className={cn(editor.isActive('bold') && 'bg-accent')}
+        >
+          <Bold className="h-4 w-4 mr-2" />
+          Bold
+          <span className="ml-auto text-xs text-muted-foreground">Ctrl+B</span>
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          disabled={!editor.can().chain().focus().toggleItalic().run()}
+          className={cn(editor.isActive('italic') && 'bg-accent')}
+        >
+          <Italic className="h-4 w-4 mr-2" />
+          Italic
+          <span className="ml-auto text-xs text-muted-foreground">Ctrl+I</span>
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          disabled={!editor.can().chain().focus().toggleStrike().run()}
+          className={cn(editor.isActive('strike') && 'bg-accent')}
+        >
+          <Strikethrough className="h-4 w-4 mr-2" />
+          Strikethrough
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => editor.chain().focus().toggleCode().run()}
+          disabled={!editor.can().chain().focus().toggleCode().run()}
+          className={cn(editor.isActive('code') && 'bg-accent')}
+        >
+          <Code className="h-4 w-4 mr-2" />
+          Inline Code
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
+        {/* Lists */}
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <List className="h-4 w-4 mr-2" />
+            Lists
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent>
+            <ContextMenuItem
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={cn(editor.isActive('bulletList') && 'bg-accent')}
+            >
+              <List className="h-4 w-4 mr-2" />
+              Bullet List
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              className={cn(editor.isActive('orderedList') && 'bg-accent')}
+            >
+              <ListOrdered className="h-4 w-4 mr-2" />
+              Numbered List
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => editor.chain().focus().toggleTaskList().run()}
+              className={cn(editor.isActive('taskList') && 'bg-accent')}
+            >
+              <CheckSquare className="h-4 w-4 mr-2" />
+              Task List
+            </ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+
+        <ContextMenuSeparator />
+
+        {/* Insert Elements */}
+        <ContextMenuItem onClick={setLink}>
+          <LinkIcon className="h-4 w-4 mr-2" />
+          {editor.isActive('link') ? 'Edit Link' : 'Insert Link'}
+        </ContextMenuItem>
+        <ContextMenuItem onClick={addImage}>
+          <ImageIcon className="h-4 w-4 mr-2" />
+          Insert Image
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run()
+          }
+        >
+          <TableIcon className="h-4 w-4 mr-2" />
+          Insert Table
+        </ContextMenuItem>
+        <ContextMenuItem onClick={addHorizontalRule}>
+          <Minus className="h-4 w-4 mr-2" />
+          Insert Divider
+        </ContextMenuItem>
+
+        <ContextMenuSeparator />
+
+        {/* Undo/Redo */}
+        <ContextMenuItem
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().chain().focus().undo().run()}
+        >
+          <Undo className="h-4 w-4 mr-2" />
+          Undo
+          <span className="ml-auto text-xs text-muted-foreground">Ctrl+Z</span>
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().chain().focus().redo().run()}
+        >
+          <Redo className="h-4 w-4 mr-2" />
+          Redo
+          <span className="ml-auto text-xs text-muted-foreground">Ctrl+Y</span>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
 
@@ -480,11 +750,13 @@ function RichTextEditor({
   return (
     <div className={cn(richTextEditorVariants({ size }), className)} {...props}>
       {showToolbar && <EditorToolbar editor={editor} />}
-      <EditorContent
-        editor={editor}
-        name={name}
-        className={cn('min-h-0 flex-1', !showToolbar && 'p-4')}
-      />
+      <EditorContextMenu editor={editor}>
+        <EditorContent
+          editor={editor}
+          name={name}
+          className={cn('min-h-0 flex-1', !showToolbar && 'p-4')}
+        />
+      </EditorContextMenu>
     </div>
   );
 }
