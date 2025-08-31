@@ -160,35 +160,41 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/blogs">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Blogs
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Blog</h1>
-          <p className="text-muted-foreground">
-            Update your blog post information
-          </p>
+    <div className="container mx-auto max-w-7xl">
+      {/* Header Section */}
+      <div className="border-b bg-background px-6 py-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/dashboard/blogs">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Blogs
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Edit Blog</h1>
+            <p className="text-muted-foreground">
+              Update your blog post information
+            </p>
+          </div>
         </div>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Blog Content</CardTitle>
-                  <CardDescription>
-                    Update the main content and metadata for your blog post.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
+      {/* Main Form Content */}
+      <div className="p-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid gap-8 lg:grid-cols-3">
+              {/* Main Content Column */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Basic Information Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Basic Information</CardTitle>
+                    <CardDescription>
+                      Essential details for your blog post
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                     <div className="grid gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control}
@@ -296,7 +302,18 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                         </FormItem>
                       )}
                     />
+                  </CardContent>
+                </Card>
 
+                {/* Content Editor Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Content Editor</CardTitle>
+                    <CardDescription>
+                      Update your blog post content using our rich text editor
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
                     <FormField
                       control={form.control}
                       name="description"
@@ -315,403 +332,446 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                         </FormItem>
                       )}
                     />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Sidebar Column */}
+              <div className="space-y-6">
+                {/* SEO Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <span>SEO Settings</span>
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                        Optional
+                      </span>
+                    </CardTitle>
+                    <CardDescription>
+                      Optimize your blog for search engines
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="metaTitle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Meta Title</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="SEO title"
+                              disabled={isLoading}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            Recommended: 50-60 characters
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="metaDescription"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Meta Description</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="SEO description"
+                              className="resize-none"
+                              rows={2}
+                              disabled={isLoading}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            Recommended: 150-160 characters
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="metaKeywords"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Meta Keywords</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="keyword1, keyword2, keyword3"
+                              disabled={isLoading}
+                              {...field}
+                              onChange={e => {
+                                const keywords = e.target.value
+                                  .split(',')
+                                  .map(k => k.trim())
+                                  .filter(Boolean);
+                                field.onChange(keywords);
+                              }}
+                              value={field.value?.join(', ') || ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Categories and Tags */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <span>Organization</span>
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                        Required
+                      </span>
+                    </CardTitle>
+                    <CardDescription>
+                      Categorize and tag your blog post
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="categoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={isLoading}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories.length === 0 ? (
+                                <SelectItem value="no-categories" disabled>
+                                  No categories available
+                                </SelectItem>
+                              ) : (
+                                categories.map(category => (
+                                  <SelectItem
+                                    key={category.id}
+                                    value={category.id}
+                                  >
+                                    {category.name}
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="tags"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tags</FormLabel>
+                          <FormControl>
+                            <MultiSelect
+                              options={mockTags}
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              placeholder="Select tags..."
+                              name={field.name}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Select relevant tags for your blog post.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Images */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <span>Images</span>
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
+                        Optional
+                      </span>
+                    </CardTitle>
+                    <CardDescription>
+                      Update images for your blog post
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Blog Image */}
+                    <FormField
+                      control={form.control}
+                      name="blogImage"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Blog Image</FormLabel>
+                          <FormControl>
+                            <div className="space-y-4">
+                              {/* Current Image Display */}
+                              {blog.blogImage &&
+                                typeof blog.blogImage === 'object' &&
+                                'url' in blog.blogImage &&
+                                !blogImage && (
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">
+                                      Current Image
+                                    </label>
+                                    <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
+                                      <Image
+                                        src={blog.blogImage.url as string}
+                                        alt={
+                                          (blog.blogImage.altText as string) ||
+                                          'Blog image'
+                                        }
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+
+                              {/* New Image Preview */}
+                              {blogImage && (
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium">
+                                    New Image Preview
+                                  </label>
+                                  <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
+                                    <Image
+                                      src={URL.createObjectURL(blogImage)}
+                                      alt="New blog preview"
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setBlogImage(null)}
+                                    disabled={isLoading}
+                                  >
+                                    Remove New Image
+                                  </Button>
+                                </div>
+                              )}
+
+                              {/* Upload Input */}
+                              <div className="space-y-2">
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      // Validate file size (5MB limit)
+                                      if (file.size > 5 * 1024 * 1024) {
+                                        toast.error(
+                                          'Image size should be less than 5MB'
+                                        );
+                                        return;
+                                      }
+
+                                      // Validate file type
+                                      if (!file.type.startsWith('image/')) {
+                                        toast.error(
+                                          'Please select a valid image file'
+                                        );
+                                        return;
+                                      }
+
+                                      setBlogImage(file);
+                                    }
+                                  }}
+                                  disabled={isLoading}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Upload a new image to replace the current one.
+                                  Max size: 5MB. Recommended: 800x400px
+                                </p>
+                              </div>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Banner Image */}
+                    <FormField
+                      control={form.control}
+                      name="bannerImage"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Banner Image</FormLabel>
+                          <FormControl>
+                            <div className="space-y-4">
+                              {/* Current Image Display */}
+                              {blog.bannerImage &&
+                                typeof blog.bannerImage === 'object' &&
+                                'url' in blog.bannerImage &&
+                                !bannerImage && (
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">
+                                      Current Image
+                                    </label>
+                                    <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
+                                      <Image
+                                        src={blog.bannerImage.url as string}
+                                        alt={
+                                          (blog.bannerImage
+                                            .altText as string) ||
+                                          'Banner image'
+                                        }
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+
+                              {/* New Image Preview */}
+                              {bannerImage && (
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium">
+                                    New Image Preview
+                                  </label>
+                                  <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
+                                    <Image
+                                      src={URL.createObjectURL(bannerImage)}
+                                      alt="New banner preview"
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setBannerImage(null)}
+                                    disabled={isLoading}
+                                  >
+                                    Remove New Image
+                                  </Button>
+                                </div>
+                              )}
+
+                              {/* Upload Input */}
+                              <div className="space-y-2">
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      // Validate file size (5MB limit)
+                                      if (file.size > 5 * 1024 * 1024) {
+                                        toast.error(
+                                          'Image size should be less than 5MB'
+                                        );
+                                        return;
+                                      }
+
+                                      // Validate file type
+                                      if (!file.type.startsWith('image/')) {
+                                        toast.error(
+                                          'Please select a valid image file'
+                                        );
+                                        return;
+                                      }
+
+                                      setBannerImage(file);
+                                    }
+                                  }}
+                                  disabled={isLoading}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Upload a new image to replace the current one.
+                                  Max size: 5MB. Recommended: 1200x400px
+                                </p>
+                              </div>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="imageAltText"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Image Alt Text</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Describe the image for accessibility"
+                              disabled={isLoading}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Submit Section */}
+            <div className="lg:col-span-3">
+              <Card className="border-dashed">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="font-semibold">Ready to update?</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Review your changes and update when ready
+                      </p>
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      size="lg"
+                      className="w-full sm:w-auto"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Update Blog
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             </div>
-
-            <div className="space-y-6">
-              {/* SEO Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">SEO Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="metaTitle"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Meta Title</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="SEO title"
-                            disabled={isLoading}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription className="text-xs">
-                          Recommended: 50-60 characters
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="metaDescription"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Meta Description</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="SEO description"
-                            className="resize-none"
-                            rows={2}
-                            disabled={isLoading}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription className="text-xs">
-                          Recommended: 150-160 characters
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="metaKeywords"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Meta Keywords</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="keyword1, keyword2, keyword3"
-                            disabled={isLoading}
-                            {...field}
-                            onChange={e => {
-                              const keywords = e.target.value
-                                .split(',')
-                                .map(k => k.trim())
-                                .filter(Boolean);
-                              field.onChange(keywords);
-                            }}
-                            value={field.value?.join(', ') || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Category & Tags */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Organization</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="categoryId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category *</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          disabled={isLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.length === 0 ? (
-                              <SelectItem value="no-categories" disabled>
-                                No categories available
-                              </SelectItem>
-                            ) : (
-                              categories.map(category => (
-                                <SelectItem
-                                  key={category.id}
-                                  value={category.id}
-                                >
-                                  {category.name}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="tags"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tags</FormLabel>
-                        <FormControl>
-                          <MultiSelect
-                            options={mockTags}
-                            value={field.value}
-                            onValueChange={field.onChange}
-                            placeholder="Select tags..."
-                            name={field.name}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Select relevant tags for your blog post.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Images */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Images</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Blog Image */}
-                  <FormField
-                    control={form.control}
-                    name="blogImage"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Blog Image</FormLabel>
-                        <FormControl>
-                          <div className="space-y-4">
-                            {/* Current Image Display */}
-                            {blog.blogImage &&
-                              typeof blog.blogImage === 'object' &&
-                              'url' in blog.blogImage &&
-                              !blogImage && (
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium">
-                                    Current Image
-                                  </label>
-                                  <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
-                                    <Image
-                                      src={blog.blogImage.url as string}
-                                      alt={
-                                        (blog.blogImage.altText as string) ||
-                                        'Blog image'
-                                      }
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                </div>
-                              )}
-
-                            {/* New Image Preview */}
-                            {blogImage && (
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium">
-                                  New Image Preview
-                                </label>
-                                <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
-                                  <Image
-                                    src={URL.createObjectURL(blogImage)}
-                                    alt="New blog preview"
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setBlogImage(null)}
-                                  disabled={isLoading}
-                                >
-                                  Remove New Image
-                                </Button>
-                              </div>
-                            )}
-
-                            {/* Upload Input */}
-                            <div className="space-y-2">
-                              <Input
-                                type="file"
-                                accept="image/*"
-                                onChange={e => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    // Validate file size (5MB limit)
-                                    if (file.size > 5 * 1024 * 1024) {
-                                      toast.error(
-                                        'Image size should be less than 5MB'
-                                      );
-                                      return;
-                                    }
-
-                                    // Validate file type
-                                    if (!file.type.startsWith('image/')) {
-                                      toast.error(
-                                        'Please select a valid image file'
-                                      );
-                                      return;
-                                    }
-
-                                    setBlogImage(file);
-                                  }
-                                }}
-                                disabled={isLoading}
-                              />
-                              <p className="text-xs text-muted-foreground">
-                                Upload a new image to replace the current one.
-                                Max size: 5MB. Recommended: 800x400px
-                              </p>
-                            </div>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Banner Image */}
-                  <FormField
-                    control={form.control}
-                    name="bannerImage"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Banner Image</FormLabel>
-                        <FormControl>
-                          <div className="space-y-4">
-                            {/* Current Image Display */}
-                            {blog.bannerImage &&
-                              typeof blog.bannerImage === 'object' &&
-                              'url' in blog.bannerImage &&
-                              !bannerImage && (
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium">
-                                    Current Image
-                                  </label>
-                                  <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
-                                    <Image
-                                      src={blog.bannerImage.url as string}
-                                      alt={
-                                        (blog.bannerImage.altText as string) ||
-                                        'Banner image'
-                                      }
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                </div>
-                              )}
-
-                            {/* New Image Preview */}
-                            {bannerImage && (
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium">
-                                  New Image Preview
-                                </label>
-                                <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
-                                  <Image
-                                    src={URL.createObjectURL(bannerImage)}
-                                    alt="New banner preview"
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setBannerImage(null)}
-                                  disabled={isLoading}
-                                >
-                                  Remove New Image
-                                </Button>
-                              </div>
-                            )}
-
-                            {/* Upload Input */}
-                            <div className="space-y-2">
-                              <Input
-                                type="file"
-                                accept="image/*"
-                                onChange={e => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    // Validate file size (5MB limit)
-                                    if (file.size > 5 * 1024 * 1024) {
-                                      toast.error(
-                                        'Image size should be less than 5MB'
-                                      );
-                                      return;
-                                    }
-
-                                    // Validate file type
-                                    if (!file.type.startsWith('image/')) {
-                                      toast.error(
-                                        'Please select a valid image file'
-                                      );
-                                      return;
-                                    }
-
-                                    setBannerImage(file);
-                                  }
-                                }}
-                                disabled={isLoading}
-                              />
-                              <p className="text-xs text-muted-foreground">
-                                Upload a new image to replace the current one.
-                                Max size: 5MB. Recommended: 1200x400px
-                              </p>
-                            </div>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="imageAltText"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Image Alt Text</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Describe the image for accessibility"
-                            disabled={isLoading}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex gap-4 pt-6">
-            <Button type="submit" disabled={isLoading} size="lg">
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Update Blog
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }
