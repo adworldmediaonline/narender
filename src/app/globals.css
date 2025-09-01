@@ -69,6 +69,12 @@
   --shadow-opacity: var(--shadow-opacity);
   --color-shadow-color: var(--shadow-color);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-gradient-primary: var(--primary);
+  --color-gradient-secondary: #7c3aed; /* Purple */
+  --color-gradient-accent: #f59e0b; /* Amber */
+  --color-gradient-success: #10b981; /* Emerald */
+  --color-gradient-warning: #f97316; /* Orange */
+  --color-gradient-info: #06b6d4; /* Cyan */
 }
 
 :root {
@@ -79,7 +85,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: #3396d3;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -204,6 +210,11 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
 }
 
 /* Tiptap Editor Styling - Tailwind v4 Compatible */

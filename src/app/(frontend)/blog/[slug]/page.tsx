@@ -1,282 +1,234 @@
-import { format } from 'date-fns';
-import { ArrowLeft, CalendarDays, Share2, Tag, User } from 'lucide-react';
-import { Metadata } from 'next';
+import Section from '@/components/section';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { getBlogBySlug, getRelatedBlogs } from '@/lib/server/blog';
+import { ArrowLeft, ArrowRight, Calendar, Share2, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { getBlogBySlug, getRelatedBlogs } from '@/lib/server/blog';
-import type { CloudinaryImageData } from '@/lib/types/blog';
-
-interface BlogPageProps {
-  params: {
-    slug: string;
-  };
+interface BlogDetailPageProps {
+  params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({
-  params,
-}: BlogPageProps): Promise<Metadata> {
-  try {
-    const blog = await getBlogBySlug(params.slug);
-
-    if (!blog) {
-      return {
-        title: 'Blog Not Found',
-        description: 'The requested blog post could not be found.',
-      };
-    }
-
-    const bannerImageUrl =
-      blog.bannerImage &&
-      typeof blog.bannerImage === 'object' &&
-      'secure_url' in blog.bannerImage
-        ? (blog.bannerImage as CloudinaryImageData).secure_url
-        : null;
-
-    return {
-      title: blog.metaTitle || blog.title,
-      description: blog.metaDescription || blog.excerpt || '',
-      keywords: blog.metaKeywords?.join(', ') || '',
-      openGraph: {
-        title: blog.metaTitle || blog.title,
-        description: blog.metaDescription || blog.excerpt || '',
-        type: 'article',
-        publishedTime: blog.createdAt.toISOString(),
-        modifiedTime: blog.updatedAt.toISOString(),
-        authors: ['Blog Admin'],
-        images: bannerImageUrl
-          ? [
-              {
-                url: bannerImageUrl,
-                width: 1200,
-                height: 630,
-                alt: blog.title,
-              },
-            ]
-          : [],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: blog.metaTitle || blog.title,
-        description: blog.metaDescription || blog.excerpt || '',
-        images: bannerImageUrl ? [bannerImageUrl] : [],
-      },
-    };
-  } catch {
-    return {
-      title: 'Blog Not Found',
-      description: 'The requested blog post could not be found.',
-    };
-  }
-}
-
-export default async function BlogPage({ params }: BlogPageProps) {
-  const blog = await getBlogBySlug(params.slug);
+export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
+  const { slug } = await params;
+  const blog = await getBlogBySlug(slug);
 
   if (!blog) {
     notFound();
   }
 
-  const relatedBlogs = await getRelatedBlogs(blog.categoryId, blog.id);
-
-  const bannerImageUrl =
-    blog.bannerImage &&
-    typeof blog.bannerImage === 'object' &&
-    'secure_url' in blog.bannerImage
-      ? (blog.bannerImage as CloudinaryImageData).secure_url
-      : null;
-
-  const blogImageUrl =
-    blog.blogImage &&
-    typeof blog.blogImage === 'object' &&
-    'secure_url' in blog.blogImage
-      ? (blog.blogImage as CloudinaryImageData).secure_url
-      : null;
+  // Get related blogs from the same category
+  const relatedBlogs = await getRelatedBlogs(blog.categoryId, blog.id, 3);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <Button variant="ghost" asChild className="mb-4">
-            <Link href="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
+    <main>
+      {/* Back to Blog Button */}
+      <Section className="pt-8">
+        <div className="max-w-4xl mx-auto">
+          <Button asChild variant="ghost" className="mb-8">
+            <Link href="/blog">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Blog
             </Link>
           </Button>
         </div>
-      </div>
+      </Section>
 
-      {/* Hero Section */}
-      {bannerImageUrl && (
-        <div className="relative h-[400px] w-full">
-          <Image
-            src={bannerImageUrl}
-            alt={blog.title}
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="absolute inset-0 flex items-end">
-            <div className="container mx-auto px-4 pb-8">
-              <div className="max-w-4xl">
-                <Badge variant="secondary" className="mb-4">
-                  {blog.category?.name || 'Uncategorized'}
+      {/* Hero Section with Blog Image */}
+      {blog.blogImage && (
+        <Section className="py-0">
+          <div className="relative aspect-video max-w-6xl mx-auto overflow-hidden rounded-lg">
+            <Image
+              src={String(blog.blogImage)}
+              alt={blog.imageAltText || blog.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+        </Section>
+      )}
+
+      {/* Article Header */}
+      <Section>
+        <div className="max-w-4xl mx-auto">
+          <div className="space-y-6">
+            <div className="flex items-center gap-4 flex-wrap">
+              {blog.category && (
+                <Badge variant="outline" className="text-sm">
+                  {blog.category.name}
                 </Badge>
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                  {blog.h1 || blog.title}
-                </h1>
-                {blog.excerpt && (
-                  <p className="text-xl text-gray-200 max-w-2xl">
-                    {blog.excerpt}
-                  </p>
-                )}
+              )}
+              <Badge
+                variant={blog.status === 'PUBLISHED' ? 'default' : 'secondary'}
+              >
+                {blog.status}
+              </Badge>
+            </div>
+
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+              {blog.title}
+            </h1>
+
+            {blog.h1 && (
+              <h2 className="text-xl md:text-2xl text-muted-foreground font-medium">
+                {blog.h1}
+              </h2>
+            )}
+
+            <div className="flex items-center gap-6 text-muted-foreground border-b pb-6">
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                <span>Jimmy Asija</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                <span>
+                  {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </span>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </Section>
 
       {/* Article Content */}
-      <article className="container mx-auto px-4 py-8">
+      <Section>
         <div className="max-w-4xl mx-auto">
-          {/* Article Header (if no banner image) */}
-          {!bannerImageUrl && (
-            <header className="mb-8">
-              <Badge variant="secondary" className="mb-4">
-                {blog.category?.name || 'Uncategorized'}
-              </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {blog.h1 || blog.title}
-              </h1>
-              {blog.excerpt && (
-                <p className="text-xl text-muted-foreground mb-6">
-                  {blog.excerpt}
-                </p>
-              )}
-            </header>
-          )}
-
-          {/* Article Meta */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-8">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4" />
-              <time dateTime={blog.createdAt.toISOString()}>
-                {format(blog.createdAt, 'MMMM dd, yyyy')}
-              </time>
-            </div>
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span>Admin</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Share2 className="h-4 w-4" />
-              <Button variant="ghost" size="sm" className="h-auto p-0">
-                Share
-              </Button>
-            </div>
-          </div>
-
-          {/* Blog Image */}
-          {blogImageUrl && (
-            <div className="relative aspect-video w-full mb-8 rounded-lg overflow-hidden">
-              <Image
-                src={blogImageUrl}
-                alt={blog.imageAltText || blog.title}
-                fill
-                className="object-cover"
-              />
-            </div>
-          )}
-
-          {/* Article Content */}
-          <div className="prose-tiptap mb-8">
+          <div className="prose-tiptap prose-lg max-w-none">
             <div
               className="tiptap"
-              dangerouslySetInnerHTML={{
-                __html: blog.description,
-              }}
+              dangerouslySetInnerHTML={{ __html: blog.description }}
             />
           </div>
 
           {/* Tags */}
           {blog.tags && blog.tags.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 mb-8">
-              <Tag className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Tags:</span>
-              {blog.tags.map(tag => (
-                <Badge key={tag} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
+            <div className="mt-8 pt-8 border-t">
+              <h3 className="text-lg font-semibold mb-4">Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {blog.tags.map((tag, index) => (
+                  <Badge key={index} variant="secondary">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
 
-          <Separator className="my-8" />
-
-          {/* Related Articles */}
-          {relatedBlogs && relatedBlogs.length > 0 && (
-            <section>
-              <h2 className="text-2xl font-bold mb-6">Related Articles</h2>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {relatedBlogs.map(relatedBlog => {
-                  const relatedImageUrl =
-                    relatedBlog.blogImage &&
-                    typeof relatedBlog.blogImage === 'object' &&
-                    'secure_url' in relatedBlog.blogImage
-                      ? (relatedBlog.blogImage as CloudinaryImageData)
-                          .secure_url
-                      : null;
-
-                  return (
-                    <Card key={relatedBlog.id} className="overflow-hidden">
-                      <Link href={`/blog/${relatedBlog.slug}`}>
-                        {relatedImageUrl && (
-                          <div className="relative aspect-video w-full">
-                            <Image
-                              src={relatedImageUrl}
-                              alt={relatedBlog.title}
-                              fill
-                              className="object-cover transition-transform hover:scale-105"
-                            />
-                          </div>
-                        )}
-                        <CardContent className="p-4">
-                          <Badge variant="outline" className="mb-2 text-xs">
-                            {relatedBlog.category?.name || 'Uncategorized'}
-                          </Badge>
-                          <h3 className="font-semibold mb-2 line-clamp-2">
-                            {relatedBlog.title}
-                          </h3>
-                          {relatedBlog.excerpt && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {relatedBlog.excerpt}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-                            <CalendarDays className="h-3 w-3" />
-                            <time
-                              dateTime={relatedBlog.createdAt.toISOString()}
-                            >
-                              {format(relatedBlog.createdAt, 'MMM dd, yyyy')}
-                            </time>
-                          </div>
-                        </CardContent>
-                      </Link>
-                    </Card>
-                  );
-                })}
+          {/* Share Section */}
+          <div className="mt-8 pt-8 border-t">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="text-lg font-semibold">
+                  Share this article:
+                </span>
+                <Button variant="outline" size="sm">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
               </div>
-            </section>
-          )}
+            </div>
+          </div>
         </div>
-      </article>
-    </div>
+      </Section>
+
+      {/* Related Blogs */}
+      {relatedBlogs.length > 0 && (
+        <Section className="bg-muted/50">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+              Related Articles
+            </h2>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {relatedBlogs.map(relatedBlog => (
+                <Card
+                  key={relatedBlog.id}
+                  className="group hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="relative aspect-video overflow-hidden rounded-t-lg">
+                    {relatedBlog.blogImage ? (
+                      <Image
+                        src={String(relatedBlog.blogImage)}
+                        alt={relatedBlog.imageAltText || relatedBlog.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <div className="text-4xl">🎬</div>
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {new Date(relatedBlog.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">
+                      {relatedBlog.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="line-clamp-3 mb-4">
+                      {relatedBlog.excerpt ||
+                        relatedBlog.description
+                          .replace(/<[^>]*>/g, '')
+                          .substring(0, 150) + '...'}
+                    </CardDescription>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="w-full group-hover:bg-primary group-hover:text-primary-foreground"
+                    >
+                      <Link href={`/blog/${relatedBlog.slug}`}>
+                        Read More
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </Section>
+      )}
+
+      {/* Navigation */}
+      <Section>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center">
+            <Button asChild variant="outline">
+              <Link href="/blog">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                All Articles
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/">
+                Back to Home
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </Section>
+    </main>
   );
 }
