@@ -63,6 +63,7 @@ const formSchema = z.object({
       const textContent = html.replace(/<[^>]*>/g, '').trim();
       return textContent.length > 0;
     }, 'Content cannot be empty'),
+  slug: z.string(), // Will be auto-generated from title
   status: z.enum(['DRAFT', 'PUBLISHED']),
   blogImage: z.any().refine(file => file !== null && file !== undefined, {
     message: 'Blog image is required',
@@ -71,7 +72,8 @@ const formSchema = z.object({
     message: 'Banner image is required',
   }),
   categoryId: z.string().min(1, 'Category is required'),
-  tags: z.string().array().min(1, 'At least one tag is required'),
+
+  tags: z.string().array().optional().default([]),
   imageAltText: z.string().optional(),
 });
 
@@ -104,10 +106,12 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
       metaKeywords: [],
       excerpt: '',
       description: '',
+      slug: 'auto-generated',
       status: 'DRAFT',
       blogImage: null,
       bannerImage: null,
       categoryId: '',
+
       tags: [],
       imageAltText: '',
     },
@@ -486,7 +490,7 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
                       name="tags"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tags</FormLabel>
+                          <FormLabel>Tags (Optional)</FormLabel>
                           <FormControl>
                             <MultiSelect
                               options={mockTags}
@@ -497,7 +501,7 @@ export default function NewBlogForm({ categories }: NewBlogFormProps) {
                             />
                           </FormControl>
                           <FormDescription>
-                            Select relevant tags for your blog post.
+                            Select relevant tags for your blog post (optional).
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

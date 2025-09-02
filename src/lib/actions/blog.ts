@@ -7,12 +7,12 @@ import { deleteFromCloudinary, uploadToCloudinary } from '@/lib/cloudinary';
 import prisma from '@/lib/prisma';
 import type {
   BlogCategoryFormData,
-  BlogFormData,
-  CloudinaryImageData,
+  CreateBlogFormData,
+  EditBlogFormData,
 } from '@/lib/types/blog';
 import slugify from 'slugify';
 
-export async function createBlog(data: BlogFormData) {
+export async function createBlog(data: CreateBlogFormData) {
   try {
     let blogImageData: Prisma.JsonValue = null;
     let bannerImageData: Prisma.JsonValue = null;
@@ -63,7 +63,7 @@ export async function createBlog(data: BlogFormData) {
   }
 }
 
-export async function updateBlog(id: string, data: BlogFormData) {
+export async function updateBlog(id: string, data: EditBlogFormData) {
   try {
     const existingBlog = await prisma.blog.findUnique({
       where: { id },
@@ -84,9 +84,13 @@ export async function updateBlog(id: string, data: BlogFormData) {
         typeof existingBlog.blogImage === 'object' &&
         'public_id' in existingBlog.blogImage
       ) {
-        await deleteFromCloudinary(
-          (existingBlog.blogImage as CloudinaryImageData).public_id
-        );
+        const existingImage = existingBlog.blogImage as Record<string, unknown>;
+        if (
+          existingImage?.public_id &&
+          typeof existingImage.public_id === 'string'
+        ) {
+          await deleteFromCloudinary(existingImage.public_id);
+        }
       }
       const uploadedImage = await uploadToCloudinary(
         data.blogImage,
@@ -103,9 +107,16 @@ export async function updateBlog(id: string, data: BlogFormData) {
         typeof existingBlog.bannerImage === 'object' &&
         'public_id' in existingBlog.bannerImage
       ) {
-        await deleteFromCloudinary(
-          (existingBlog.bannerImage as CloudinaryImageData).public_id
-        );
+        const existingBanner = existingBlog.bannerImage as Record<
+          string,
+          unknown
+        >;
+        if (
+          existingBanner?.public_id &&
+          typeof existingBanner.public_id === 'string'
+        ) {
+          await deleteFromCloudinary(existingBanner.public_id);
+        }
       }
       const uploadedImage = await uploadToCloudinary(
         data.bannerImage,
@@ -158,18 +169,20 @@ export async function deleteBlog(id: string) {
       typeof blog.blogImage === 'object' &&
       'public_id' in blog.blogImage
     ) {
-      await deleteFromCloudinary(
-        (blog.blogImage as CloudinaryImageData).public_id
-      );
+      const blogImage = blog.blogImage as Record<string, unknown>;
+      if (blogImage?.public_id && typeof blogImage.public_id === 'string') {
+        await deleteFromCloudinary(blogImage.public_id);
+      }
     }
     if (
       blog.bannerImage &&
       typeof blog.bannerImage === 'object' &&
       'public_id' in blog.bannerImage
     ) {
-      await deleteFromCloudinary(
-        (blog.bannerImage as CloudinaryImageData).public_id
-      );
+      const bannerImage = blog.bannerImage as Record<string, unknown>;
+      if (bannerImage?.public_id && typeof bannerImage.public_id === 'string') {
+        await deleteFromCloudinary(bannerImage.public_id);
+      }
     }
 
     await prisma.blog.delete({
@@ -235,9 +248,16 @@ export async function updateCategory(id: string, data: BlogCategoryFormData) {
         typeof existingCategory.bannerImage === 'object' &&
         'public_id' in existingCategory.bannerImage
       ) {
-        await deleteFromCloudinary(
-          (existingCategory.bannerImage as CloudinaryImageData).public_id
-        );
+        const existingBanner = existingCategory.bannerImage as Record<
+          string,
+          unknown
+        >;
+        if (
+          existingBanner?.public_id &&
+          typeof existingBanner.public_id === 'string'
+        ) {
+          await deleteFromCloudinary(existingBanner.public_id);
+        }
       }
       const uploadedImage = await uploadToCloudinary(
         data.bannerImage,
@@ -292,9 +312,10 @@ export async function deleteCategory(id: string) {
       typeof category.bannerImage === 'object' &&
       'public_id' in category.bannerImage
     ) {
-      await deleteFromCloudinary(
-        (category.bannerImage as CloudinaryImageData).public_id
-      );
+      const bannerImage = category.bannerImage as Record<string, unknown>;
+      if (bannerImage?.public_id && typeof bannerImage.public_id === 'string') {
+        await deleteFromCloudinary(bannerImage.public_id);
+      }
     }
 
     await prisma.blogCategory.delete({

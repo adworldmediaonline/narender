@@ -40,10 +40,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 import { updateBlog } from '@/lib/actions/blog';
-import type { Blog, EditBlogFormData } from '@/lib/types/blog';
+import type { BlogWithCategory, EditBlogFormData } from '@/lib/types/blog';
 import Image from 'next/image';
 
 const formSchema = z.object({
+  id: z.string(),
   title: z.string().min(1, 'Title is required'),
   h1: z.string().optional(),
   metaTitle: z.string().optional(),
@@ -58,17 +59,13 @@ const formSchema = z.object({
       const textContent = html.replace(/<[^>]*>/g, '').trim();
       return textContent.length > 0;
     }, 'Content cannot be empty'),
+  slug: z.string(),
   status: z.enum(['DRAFT', 'PUBLISHED']),
-  blogImage: z
-    .any()
-    .nullable() // Allow null for edit form (can keep existing image)
-    .optional(),
-  bannerImage: z
-    .any()
-    .nullable() // Allow null for edit form (can keep existing image)
-    .optional(),
+  blogImage: z.any().nullable(),
+  bannerImage: z.any().nullable(),
   categoryId: z.string().min(1, 'Category is required'),
-  tags: z.string().array().min(1, 'At least one tag is required'),
+
+  tags: z.string().array().optional().default([]),
   imageAltText: z.string().optional(),
 });
 
@@ -84,7 +81,7 @@ const mockTags = [
 ];
 
 interface EditBlogFormProps {
-  blog: Blog;
+  blog: BlogWithCategory;
   categories: Array<{ id: string; name: string }>;
 }
 
@@ -97,6 +94,7 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
   const form = useForm<EditBlogFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      id: blog.id,
       title: blog.title,
       h1: blog.h1 || '',
       metaTitle: blog.metaTitle || '',
@@ -104,9 +102,11 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
       metaKeywords: blog.metaKeywords,
       excerpt: blog.excerpt || '',
       description: blog.description,
+      slug: blog.slug,
       status: blog.status,
       categoryId: blog.categoryId,
-      tags: blog.tags,
+
+      tags: blog.tags || [],
       imageAltText: blog.imageAltText || '',
     },
   });
@@ -139,8 +139,8 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
 
       const blogData: EditBlogFormData = {
         ...values,
-        blogImage: blogImage || undefined,
-        bannerImage: bannerImage || undefined,
+        blogImage: blogImage || null,
+        bannerImage: bannerImage || null,
       };
 
       const result = await updateBlog(blog.id, blogData);
@@ -481,7 +481,7 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                       name="tags"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tags</FormLabel>
+                          <FormLabel>Tags (Optional)</FormLabel>
                           <FormControl>
                             <MultiSelect
                               options={mockTags}
@@ -492,7 +492,7 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                             />
                           </FormControl>
                           <FormDescription>
-                            Select relevant tags for your blog post.
+                            Select relevant tags for your blog post (optional).
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

@@ -44,6 +44,7 @@ const formSchema = z.object({
     .string()
     .min(1, 'Name is required')
     .min(2, 'Name must be at least 2 characters'),
+  slug: z.string(),
   description: z.string().optional(),
   bannerImage: z.any().optional(),
 });
@@ -56,6 +57,7 @@ export default function NewCategoryPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      slug: 'auto-generated',
       description: '',
     },
   });

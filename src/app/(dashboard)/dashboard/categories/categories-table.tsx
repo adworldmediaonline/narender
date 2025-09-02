@@ -49,17 +49,17 @@ import {
 import { toast } from 'sonner';
 
 import { deleteCategory } from '@/lib/actions/blog';
-import { BlogCategory } from '@/lib/types/blog';
+import { BlogCategoryWithBlogCount } from '@/lib/types/blog';
 
 interface CategoriesTableProps {
-  initialCategories: BlogCategory[];
+  initialCategories: BlogCategoryWithBlogCount[];
 }
 
 export default function CategoriesTable({
   initialCategories,
 }: CategoriesTableProps) {
   const [categories, setCategories] =
-    useState<BlogCategory[]>(initialCategories);
+    useState<BlogCategoryWithBlogCount[]>(initialCategories);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -85,7 +85,7 @@ export default function CategoriesTable({
     [categories]
   );
 
-  const columns: ColumnDef<BlogCategory>[] = useMemo(
+  const columns: ColumnDef<BlogCategoryWithBlogCount>[] = useMemo(
     () => [
       {
         id: 'image',

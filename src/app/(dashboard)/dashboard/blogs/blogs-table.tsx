@@ -49,14 +49,14 @@ import {
 import { toast } from 'sonner';
 
 import { deleteBlog } from '@/lib/actions/blog';
-import { Blog } from '@/lib/types/blog';
+import { BlogWithCategory } from '@/lib/types/blog';
 
 interface BlogsTableProps {
-  initialBlogs: Blog[];
+  initialBlogs: BlogWithCategory[];
 }
 
 export default function BlogsTable({ initialBlogs }: BlogsTableProps) {
-  const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
+  const [blogs, setBlogs] = useState<BlogWithCategory[]>(initialBlogs);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -82,7 +82,7 @@ export default function BlogsTable({ initialBlogs }: BlogsTableProps) {
     [blogs]
   );
 
-  const columns: ColumnDef<Blog>[] = useMemo(
+  const columns: ColumnDef<BlogWithCategory>[] = useMemo(
     () => [
       {
         id: 'image',
@@ -97,17 +97,16 @@ export default function BlogsTable({ initialBlogs }: BlogsTableProps) {
                 <div className="relative w-16 h-12 rounded-md overflow-hidden border">
                   <Image
                     src={blog.blogImage.url as string}
-                    alt={
-                      (blog.blogImage.altText as string) ||
-                      blog.title
-                    }
+                    alt={(blog.blogImage.altText as string) || blog.title}
                     fill
                     className="object-cover"
                   />
                 </div>
               ) : (
                 <div className="w-16 h-12 rounded-md bg-muted flex items-center justify-center border">
-                  <span className="text-xs text-muted-foreground">No image</span>
+                  <span className="text-xs text-muted-foreground">
+                    No image
+                  </span>
                 </div>
               )}
             </div>

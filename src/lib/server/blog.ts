@@ -57,6 +57,7 @@ export async function getBlogs(search?: string) {
   try {
     const blogs = await prisma.blog.findMany({
       where: {
+        status: 'PUBLISHED', // Only show published blogs
         ...(search && {
           OR: [
             { title: { contains: search, mode: 'insensitive' } },
@@ -73,14 +74,38 @@ export async function getBlogs(search?: string) {
       },
     });
 
-    return { success: true, blogs };
+    return blogs;
   } catch (error) {
     console.error('Error fetching blogs:', error);
-    return {
-      success: false,
-      error: 'Failed to fetch blogs',
-      blogs: [],
-    };
+    return [];
+  }
+}
+
+export async function getBlogsAll(search?: string) {
+  try {
+    const blogs = await prisma.blog.findMany({
+      where: {
+        // status: 'PUBLISHED', // Only show published blogs
+        ...(search && {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { excerpt: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+          ],
+        }),
+      },
+      include: {
+        category: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return blogs;
+  } catch (error) {
+    console.error('Error fetching blogs:', error);
+    return [];
   }
 }
 
@@ -200,10 +225,14 @@ export async function getBlogBySlug(slug: string) {
       },
     });
 
-    return blog;
+    if (!blog) {
+      return { success: false, error: 'Blog not found' };
+    }
+
+    return { success: true, blog };
   } catch (error) {
     console.error('Error fetching blog by slug:', error);
-    return null;
+    return { success: false, error: 'Failed to fetch blog' };
   }
 }
 

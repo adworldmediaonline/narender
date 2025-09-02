@@ -18,7 +18,6 @@ interface SocialConnectSectionProps {
   titleHighlight?: string;
   description: string;
   socialLinks: SocialLink[];
-  showLabels?: boolean;
   className?: string;
 }
 
@@ -28,7 +27,6 @@ export default function SocialConnectSection({
   titleHighlight,
   description,
   socialLinks,
-  showLabels = true,
   className,
 }: SocialConnectSectionProps) {
   return (

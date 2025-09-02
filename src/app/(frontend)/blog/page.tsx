@@ -9,14 +9,23 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { getBlogs } from '@/lib/server/blog';
-import { ArrowRight, Calendar, Eye, User } from 'lucide-react';
+import {
+  ArrowRight,
+  Calendar,
+  Eye,
+  Film,
+  Newspaper,
+  Star,
+  User,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { BlogWithCategory } from '../../../lib/types/blog';
 
 export default async function BlogPage() {
-  const result = await getBlogs();
+  const blogs = await getBlogs();
 
-  if (!result.success || !result.blogs) {
+  if (!blogs) {
     return (
       <main>
         <Section className="min-h-[60vh] flex items-center justify-center">
@@ -31,7 +40,7 @@ export default async function BlogPage() {
     );
   }
 
-  const { blogs } = result;
+  // const typedBlogs = blogs as BlogWithCategory[];
 
   return (
     <main>
@@ -46,20 +55,26 @@ export default async function BlogPage() {
 
           <div className="grid gap-4 md:grid-cols-3 text-center max-w-4xl mx-auto">
             <div className="space-y-2">
-              <div className="text-3xl">🎬</div>
+              <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <Film className="h-6 w-6 text-primary" />
+              </div>
               <p className="text-sm md:text-base text-muted-foreground">
                 Exclusive behind-the-scenes insights into Bollywood productions.
               </p>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl">🌟</div>
+              <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <Star className="h-6 w-6 text-primary" />
+              </div>
               <p className="text-sm md:text-base text-muted-foreground">
                 Stories of challenges, success, and inspiration from Jimmy's
                 career.
               </p>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl">📰</div>
+              <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <Newspaper className="h-6 w-6 text-primary" />
+              </div>
               <p className="text-sm md:text-base text-muted-foreground">
                 Updates on upcoming movies and personal thoughts.
               </p>
@@ -86,59 +101,50 @@ export default async function BlogPage() {
           ) : (
             <>
               <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
-                {blogs.map(blog => (
+                {blogs.map((blog: BlogWithCategory) => (
                   <Card
                     key={blog.id}
                     className="group hover:shadow-lg transition-all duration-300"
                   >
                     <div className="relative aspect-video overflow-hidden rounded-t-lg">
-                      {blog.blogImage ? (
-                        <Image
-                          src={String(blog.blogImage)}
-                          alt={blog.imageAltText || blog.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <div className="text-4xl">🎬</div>
-                        </div>
-                      )}
-                      <div className="absolute top-4 left-4">
-                        <Badge
-                          variant={
-                            blog.status === 'PUBLISHED'
-                              ? 'default'
-                              : 'secondary'
-                          }
-                        >
-                          {blog.status}
-                        </Badge>
-                      </div>
+                      <Image
+                        src={
+                          (
+                            blog.blogImage as {
+                              url: string;
+                              public_id: string;
+                            }
+                          )?.url ?? ''
+                        }
+                        alt={blog?.imageAltText ?? blog?.title ?? ''}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {/* Status badge removed since we only show published blogs */}
                     </div>
                     <CardHeader>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          {new Date(blog.createdAt).toLocaleDateString()}
+                          {new Date(blog?.createdAt).toLocaleDateString()}
                         </span>
                         {blog.category && (
                           <>
                             <span>•</span>
                             <Badge variant="outline" className="text-xs">
-                              {blog.category.name}
+                              {blog?.category?.name}
                             </Badge>
                           </>
                         )}
                       </div>
                       <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">
-                        {blog.title}
+                        {blog?.title}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <CardDescription className="line-clamp-3 mb-4">
-                        {blog.excerpt ||
-                          blog.description
+                        {blog?.excerpt ||
+                          blog?.description
                             .replace(/<[^>]*>/g, '')
                             .substring(0, 150) + '...'}
                       </CardDescription>
@@ -154,7 +160,7 @@ export default async function BlogPage() {
                           size="sm"
                           className="group-hover:bg-primary group-hover:text-primary-foreground"
                         >
-                          <Link href={`/blog/${blog.slug}`}>
+                          <Link href={`/blog/${blog?.slug}`}>
                             <Eye className="h-4 w-4 mr-2" />
                             Read More
                             <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />

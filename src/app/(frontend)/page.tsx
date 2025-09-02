@@ -21,6 +21,7 @@ import {
   Utensils,
   Youtube,
 } from 'lucide-react';
+import { InfiniteMovieSlider } from '../../components/infinite-movie-slider';
 
 const achievements = [
   {
@@ -177,6 +178,11 @@ export default function Home() {
         />
       </Section>
 
+      {/* Infinite Movie Slider */}
+      <Section className="py-10 md:py-12 bg-gradient-to-r from-primary/5 via-muted/5 to-primary/5">
+        <InfiniteMovieSlider />
+      </Section>
+
       {/* Achievements Section */}
       <Section className="py-10 md:py-12 bg-gradient-to-r from-muted/50 via-background to-muted/50 border-y border-border/50">
         <AchievementsSection
@@ -197,7 +203,6 @@ export default function Home() {
           titleHighlight="Follow My Journey"
           description="Follow Jimmy Asija on social media to stay updated:"
           socialLinks={socialLinks}
-          showLabels={true}
         />
       </Section>
 

@@ -1,10 +1,10 @@
-import { getBlogs } from '@/lib/server/blog';
+import { getBlogsAll } from '@/lib/server/blog';
 import BlogsTable from './blogs-table';
 
 export default async function BlogsPage() {
-  const result = await getBlogs();
+  const blogs = await getBlogsAll();
 
-  if (!result.success) {
+  if (!blogs) {
     return (
       <div className="flex-1 space-y-6 p-6">
         <div className="flex items-center justify-between">
@@ -21,5 +21,5 @@ export default async function BlogsPage() {
     );
   }
 
-  return <BlogsTable initialBlogs={result.blogs} />;
+  return <BlogsTable initialBlogs={blogs} />;
 }

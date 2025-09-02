@@ -6,6 +6,7 @@ import {
   IconInnerShadowTop,
   IconWriting,
 } from '@tabler/icons-react';
+import Link from 'next/link';
 import * as React from 'react';
 
 import { NavMain } from '@/components/nav-main';
@@ -88,10 +89,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <Link href="/">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-              </a>
+                <span className="text-base font-semibold">Visit Website</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
