@@ -1,25 +1,7 @@
+import { BlogCard } from '@/components/blog-card';
 import Section from '@/components/section';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { getBlogs } from '@/lib/server/blog';
-import {
-  ArrowRight,
-  Calendar,
-  Eye,
-  Film,
-  Newspaper,
-  Star,
-  User,
-} from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { Film, Newspaper, Star } from 'lucide-react';
 import { BlogWithCategory } from '../../../lib/types/blog';
 
 export default async function BlogPage() {
@@ -100,75 +82,9 @@ export default async function BlogPage() {
             </div>
           ) : (
             <>
-              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12">
                 {blogs.map((blog: BlogWithCategory) => (
-                  <Card
-                    key={blog.id}
-                    className="group hover:shadow-lg transition-all duration-300"
-                  >
-                    <div className="relative aspect-video overflow-hidden rounded-t-lg">
-                      <Image
-                        src={
-                          (
-                            blog.blogImage as {
-                              url: string;
-                              public_id: string;
-                            }
-                          )?.url ?? ''
-                        }
-                        alt={blog?.imageAltText ?? blog?.title ?? ''}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {/* Status badge removed since we only show published blogs */}
-                    </div>
-                    <CardHeader>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>
-                          {new Date(blog?.createdAt).toLocaleDateString()}
-                        </span>
-                        {blog.category && (
-                          <>
-                            <span>•</span>
-                            <Badge variant="outline" className="text-xs">
-                              {blog?.category?.name}
-                            </Badge>
-                          </>
-                        )}
-                      </div>
-                      <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">
-                        {blog?.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="line-clamp-3 mb-4">
-                        {blog?.excerpt ||
-                          blog?.description
-                            .replace(/<[^>]*>/g, '')
-                            .substring(0, 150) + '...'}
-                      </CardDescription>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <User className="h-4 w-4" />
-                          <span>Jimmy Asija</span>
-                        </div>
-                        <Button
-                          asChild
-                          variant="ghost"
-                          size="sm"
-                          className="group-hover:bg-primary group-hover:text-primary-foreground"
-                        >
-                          <Link href={`/blog/${blog?.slug}`}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Read More
-                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <BlogCard key={blog.id} blog={blog} />
                 ))}
               </div>
             </>

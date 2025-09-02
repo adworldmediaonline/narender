@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { getBlogBySlug, getRelatedBlogs } from '@/lib/server/blog';
-import { ArrowLeft, ArrowRight, Calendar, Share2, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -81,17 +81,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               {blog.title}
             </h1>
 
-            {blog.h1 && (
-              <h2 className="text-lg md:text-xl text-muted-foreground font-medium">
-                {blog.h1}
-              </h2>
-            )}
-
             <div className="flex items-center gap-6 text-muted-foreground border-b pb-4">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span className="text-sm">Jimmy Asija</span>
-              </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <span className="text-sm">
