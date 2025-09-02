@@ -12,7 +12,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { ArrowUpDown, Edit, Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Edit, Eye, Plus, Search, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
@@ -49,17 +49,17 @@ import {
 import { toast } from 'sonner';
 
 import { deleteCategory } from '@/lib/actions/blog';
-import { BlogCategory } from '@/lib/types/blog';
+import { BlogCategoryWithBlogCount } from '@/lib/types/blog';
 
 interface CategoriesTableProps {
-  initialCategories: BlogCategory[];
+  initialCategories: BlogCategoryWithBlogCount[];
 }
 
 export default function CategoriesTable({
   initialCategories,
 }: CategoriesTableProps) {
   const [categories, setCategories] =
-    useState<BlogCategory[]>(initialCategories);
+    useState<BlogCategoryWithBlogCount[]>(initialCategories);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -85,7 +85,7 @@ export default function CategoriesTable({
     [categories]
   );
 
-  const columns: ColumnDef<BlogCategory>[] = useMemo(
+  const columns: ColumnDef<BlogCategoryWithBlogCount>[] = useMemo(
     () => [
       {
         id: 'image',
@@ -101,8 +101,7 @@ export default function CategoriesTable({
                   <Image
                     src={category.bannerImage.url as string}
                     alt={
-                      (category.bannerImage.altText as string) ||
-                      category.name
+                      (category.bannerImage.altText as string) || category.name
                     }
                     fill
                     className="object-cover"
@@ -110,7 +109,9 @@ export default function CategoriesTable({
                 </div>
               ) : (
                 <div className="w-16 h-12 rounded-md bg-muted flex items-center justify-center border">
-                  <span className="text-xs text-muted-foreground">No image</span>
+                  <span className="text-xs text-muted-foreground">
+                    No image
+                  </span>
                 </div>
               )}
             </div>
@@ -196,6 +197,11 @@ export default function CategoriesTable({
 
           return (
             <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/category/${category.slug}`}>
+                  <Eye className="h-4 w-4" />
+                </Link>
+              </Button>
               <Button variant="ghost" size="sm" asChild>
                 <Link href={`/dashboard/categories/${category.id}`}>
                   <Edit className="h-4 w-4" />

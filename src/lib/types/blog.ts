@@ -1,13 +1,19 @@
 import { Prisma } from '@prisma/client';
 
-// Use Prisma's generated types
-export type Blog = Prisma.BlogGetPayload<{
+// Prisma-generated types using GetPayload utility
+export type BlogWithCategory = Prisma.BlogGetPayload<{
   include: {
     category: true;
   };
 }>;
 
-export type BlogCategory = Prisma.BlogCategoryGetPayload<{
+export type BlogCategoryWithBlogs = Prisma.BlogCategoryGetPayload<{
+  include: {
+    blogs: true;
+  };
+}>;
+
+export type BlogCategoryWithBlogCount = Prisma.BlogCategoryGetPayload<{
   include: {
     _count: {
       select: {
@@ -17,16 +23,17 @@ export type BlogCategory = Prisma.BlogCategoryGetPayload<{
   };
 }>;
 
-// Cloudinary image interface compatible with Prisma JsonValue
+export type BlogCategory = Prisma.BlogCategoryGetPayload<Record<string, never>>;
+
+// Cloudinary image data type (for JSON fields)
 export interface CloudinaryImageData {
   public_id: string;
   url: string;
   alt: string;
-  [key: string]: string | number | boolean | undefined; // Index signature for JsonValue compatibility
 }
 
-// Form data types that extend Prisma types
-export type BlogFormData = {
+// Form data types for blog creation/editing
+export interface CreateBlogFormData {
   title: string;
   h1?: string;
   metaTitle?: string;
@@ -34,19 +41,24 @@ export type BlogFormData = {
   metaKeywords?: string[];
   excerpt?: string;
   description: string;
-  status: BlogStatus;
-  blogImage?: File | CloudinaryImageData;
-  bannerImage?: File | CloudinaryImageData;
-  imageAltText?: string;
+  slug: string;
+  status: 'DRAFT' | 'PUBLISHED';
+  blogImage: File | null;
+  bannerImage: File | null;
   categoryId: string;
-  tags?: string[];
-};
 
+  tags?: string[];
+  imageAltText?: string;
+}
+
+export interface EditBlogFormData extends CreateBlogFormData {
+  id: string;
+}
+
+// Category form data type
 export type BlogCategoryFormData = {
   name: string;
+  slug: string;
   description?: string;
-  bannerImage?: File | CloudinaryImageData;
+  bannerImage?: File | null;
 };
-
-// Define BlogStatus enum locally since it's defined in Prisma schema
-export type BlogStatus = 'DRAFT' | 'PUBLISHED';

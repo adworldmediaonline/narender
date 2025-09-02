@@ -39,6 +39,7 @@ const formSchema = z.object({
     .string()
     .min(1, 'Name is required')
     .min(2, 'Name must be at least 2 characters'),
+  slug: z.string(),
   description: z.string().optional(),
   bannerImage: z.any().optional(),
 });
@@ -56,6 +57,7 @@ export default function EditCategoryForm({ category }: EditCategoryFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: category.name,
+      slug: category.slug,
       description: category.description || '',
     },
   });
@@ -70,7 +72,7 @@ export default function EditCategoryForm({ category }: EditCategoryFormProps) {
 
       const formData: BlogCategoryFormData = {
         ...data,
-        bannerImage: bannerImage || undefined,
+        bannerImage: bannerImage || null,
       };
 
       const result = await updateCategory(category.id, formData);

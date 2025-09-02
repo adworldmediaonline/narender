@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -26,6 +26,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  ImageUpload,
+  ImageUploadContent,
+  ImageUploadError,
+  ImageUploadPreview,
+  ImageUploadTrigger,
+} from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
@@ -37,14 +44,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { createBlog } from '@/lib/actions/blog';
+import type { CreateBlogFormData } from '@/lib/types/blog';
 import { toast } from 'sonner';
 
-import { updateBlog } from '@/lib/actions/blog';
-import type { BlogWithCategory, EditBlogFormData } from '@/lib/types/blog';
-import Image from 'next/image';
-
 const formSchema = z.object({
-  id: z.string(),
   title: z.string().min(1, 'Title is required'),
   h1: z.string().optional(),
   metaTitle: z.string().optional(),
@@ -59,10 +63,14 @@ const formSchema = z.object({
       const textContent = html.replace(/<[^>]*>/g, '').trim();
       return textContent.length > 0;
     }, 'Content cannot be empty'),
-  slug: z.string(),
+  slug: z.string(), // Will be auto-generated from title
   status: z.enum(['DRAFT', 'PUBLISHED']),
-  blogImage: z.any().nullable(),
-  bannerImage: z.any().nullable(),
+  blogImage: z.any().refine(file => file !== null && file !== undefined, {
+    message: 'Blog image is required',
+  }),
+  bannerImage: z.any().refine(file => file !== null && file !== undefined, {
+    message: 'Banner image is required',
+  }),
   categoryId: z.string().min(1, 'Category is required'),
 
   tags: z.string().array().optional().default([]),
@@ -80,40 +88,40 @@ const mockTags = [
   { value: 'guide', label: 'Guide' },
 ];
 
-interface EditBlogFormProps {
-  blog: BlogWithCategory;
+interface NewBlogFormProps {
   categories: Array<{ id: string; name: string }>;
 }
 
-export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
+export default function NewBlogForm({ categories }: NewBlogFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [blogImage, setBlogImage] = useState<File | null>(null);
-  const [bannerImage, setBannerImage] = useState<File | null>(null);
 
-  const form = useForm<EditBlogFormData>({
+  const form = useForm<CreateBlogFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: blog.id,
-      title: blog.title,
-      h1: blog.h1 || '',
-      metaTitle: blog.metaTitle || '',
-      metaDescription: blog.metaDescription || '',
-      metaKeywords: blog.metaKeywords,
-      excerpt: blog.excerpt || '',
-      description: blog.description,
-      slug: blog.slug,
-      status: blog.status,
-      categoryId: blog.categoryId,
+      title: '',
+      h1: '',
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: [],
+      excerpt: '',
+      description: '',
+      slug: 'auto-generated',
+      status: 'DRAFT',
+      blogImage: null,
+      bannerImage: null,
+      categoryId: '',
 
-      tags: blog.tags || [],
-      imageAltText: blog.imageAltText || '',
+      tags: [],
+      imageAltText: '',
     },
   });
 
   // Auto-generate slug from title
   const title = form.watch('title');
   const slug = title ? slugify(title, { lower: true, strict: true }) : '';
+
+  // No need for custom handlers - FormControl handles this automatically
 
   // Auto-generate meta fields from title and excerpt
   const handleAutoFillMeta = () => {
@@ -133,27 +141,26 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
     }
   };
 
-  async function onSubmit(values: EditBlogFormData) {
+  async function onSubmit(values: CreateBlogFormData) {
     try {
       setIsLoading(true);
 
-      const blogData: EditBlogFormData = {
+      // Form validation already ensures images are present
+      const blogData: CreateBlogFormData = {
         ...values,
-        blogImage: blogImage || null,
-        bannerImage: bannerImage || null,
       };
 
-      const result = await updateBlog(blog.id, blogData);
+      const result = await createBlog(blogData);
 
       if (result.success) {
-        toast.success('Blog updated successfully!');
+        toast.success('Blog created successfully!');
         router.push('/dashboard/blogs');
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to update blog');
+        toast.error(result.error || 'Failed to create blog');
       }
     } catch {
-      toast.error('Failed to update blog');
+      toast.error('Failed to create blog');
     } finally {
       setIsLoading(false);
     }
@@ -171,9 +178,11 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Edit Blog</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Create New Blog
+            </h1>
             <p className="text-muted-foreground">
-              Update your blog post information
+              Create engaging content for your audience
             </p>
           </div>
         </div>
@@ -310,7 +319,7 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                   <CardHeader>
                     <CardTitle>Content Editor</CardTitle>
                     <CardDescription>
-                      Update your blog post content using our rich text editor
+                      Write your blog post content using our rich text editor
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -424,7 +433,7 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                   </CardContent>
                 </Card>
 
-                {/* Categories and Tags */}
+                {/* Category & Tags */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
@@ -506,12 +515,12 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <span>Images</span>
-                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
-                        Optional
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                        Required
                       </span>
                     </CardTitle>
                     <CardDescription>
-                      Update images for your blog post
+                      Upload images for your blog post
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -519,95 +528,22 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                     <FormField
                       control={form.control}
                       name="blogImage"
-                      render={() => (
+                      render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Blog Image</FormLabel>
+                          <FormLabel>Blog Image *</FormLabel>
                           <FormControl>
-                            <div className="space-y-4">
-                              {/* Current Image Display */}
-                              {blog.blogImage &&
-                                typeof blog.blogImage === 'object' &&
-                                'url' in blog.blogImage &&
-                                !blogImage && (
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium">
-                                      Current Image
-                                    </label>
-                                    <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
-                                      <Image
-                                        src={blog.blogImage.url as string}
-                                        alt={
-                                          (blog.blogImage.altText as string) ||
-                                          'Blog image'
-                                        }
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-
-                              {/* New Image Preview */}
-                              {blogImage && (
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium">
-                                    New Image Preview
-                                  </label>
-                                  <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
-                                    <Image
-                                      src={URL.createObjectURL(blogImage)}
-                                      alt="New blog preview"
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setBlogImage(null)}
-                                    disabled={isLoading}
-                                  >
-                                    Remove New Image
-                                  </Button>
-                                </div>
-                              )}
-
-                              {/* Upload Input */}
-                              <div className="space-y-2">
-                                <Input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={e => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      // Validate file size (5MB limit)
-                                      if (file.size > 5 * 1024 * 1024) {
-                                        toast.error(
-                                          'Image size should be less than 5MB'
-                                        );
-                                        return;
-                                      }
-
-                                      // Validate file type
-                                      if (!file.type.startsWith('image/')) {
-                                        toast.error(
-                                          'Please select a valid image file'
-                                        );
-                                        return;
-                                      }
-
-                                      setBlogImage(file);
-                                    }
-                                  }}
-                                  disabled={isLoading}
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                  Upload a new image to replace the current one.
-                                  Max size: 5MB. Recommended: 800x400px
-                                </p>
-                              </div>
-                            </div>
+                            <ImageUpload
+                              {...field}
+                              maxSize={1 * 1024 * 1024} // 1MB
+                              disabled={isLoading}
+                              className="w-full"
+                            >
+                              <ImageUploadPreview />
+                              <ImageUploadTrigger>
+                                <ImageUploadContent />
+                              </ImageUploadTrigger>
+                              <ImageUploadError />
+                            </ImageUpload>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -618,96 +554,22 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                     <FormField
                       control={form.control}
                       name="bannerImage"
-                      render={() => (
+                      render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Banner Image</FormLabel>
+                          <FormLabel>Banner Image *</FormLabel>
                           <FormControl>
-                            <div className="space-y-4">
-                              {/* Current Image Display */}
-                              {blog.bannerImage &&
-                                typeof blog.bannerImage === 'object' &&
-                                'url' in blog.bannerImage &&
-                                !bannerImage && (
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium">
-                                      Current Image
-                                    </label>
-                                    <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
-                                      <Image
-                                        src={blog.bannerImage.url as string}
-                                        alt={
-                                          (blog.bannerImage
-                                            .altText as string) ||
-                                          'Banner image'
-                                        }
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-
-                              {/* New Image Preview */}
-                              {bannerImage && (
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium">
-                                    New Image Preview
-                                  </label>
-                                  <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
-                                    <Image
-                                      src={URL.createObjectURL(bannerImage)}
-                                      alt="New banner preview"
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setBannerImage(null)}
-                                    disabled={isLoading}
-                                  >
-                                    Remove New Image
-                                  </Button>
-                                </div>
-                              )}
-
-                              {/* Upload Input */}
-                              <div className="space-y-2">
-                                <Input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={e => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      // Validate file size (5MB limit)
-                                      if (file.size > 5 * 1024 * 1024) {
-                                        toast.error(
-                                          'Image size should be less than 5MB'
-                                        );
-                                        return;
-                                      }
-
-                                      // Validate file type
-                                      if (!file.type.startsWith('image/')) {
-                                        toast.error(
-                                          'Please select a valid image file'
-                                        );
-                                        return;
-                                      }
-
-                                      setBannerImage(file);
-                                    }
-                                  }}
-                                  disabled={isLoading}
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                  Upload a new image to replace the current one.
-                                  Max size: 5MB. Recommended: 1200x400px
-                                </p>
-                              </div>
-                            </div>
+                            <ImageUpload
+                              {...field}
+                              maxSize={1 * 1024 * 1024} // 1MB
+                              disabled={isLoading}
+                              className="w-full"
+                            >
+                              <ImageUploadPreview />
+                              <ImageUploadTrigger>
+                                <ImageUploadContent />
+                              </ImageUploadTrigger>
+                              <ImageUploadError />
+                            </ImageUpload>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -722,11 +584,14 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                           <FormLabel>Image Alt Text</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Describe the image for accessibility"
+                              placeholder="Describe the images for accessibility"
                               disabled={isLoading}
                               {...field}
                             />
                           </FormControl>
+                          <FormDescription className="text-xs">
+                            Important for SEO and accessibility
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -742,9 +607,9 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                 <CardContent className="pt-6">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h3 className="font-semibold">Ready to update?</h3>
+                      <h3 className="font-semibold">Ready to publish?</h3>
                       <p className="text-sm text-muted-foreground">
-                        Review your changes and update when ready
+                        Review your blog post and publish when ready
                       </p>
                     </div>
                     <Button
@@ -755,13 +620,13 @@ export default function EditBlogForm({ blog, categories }: EditBlogFormProps) {
                     >
                       {isLoading ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Updating...
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                          Creating...
                         </>
                       ) : (
                         <>
                           <Save className="mr-2 h-4 w-4" />
-                          Update Blog
+                          Create Blog
                         </>
                       )}
                     </Button>

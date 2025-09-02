@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Save } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -27,6 +26,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  ImageUpload,
+  ImageUploadContent,
+  ImageUploadError,
+  ImageUploadPreview,
+  ImageUploadTrigger,
+} from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { createCategory } from '@/lib/actions/blog';
@@ -38,6 +44,7 @@ const formSchema = z.object({
     .string()
     .min(1, 'Name is required')
     .min(2, 'Name must be at least 2 characters'),
+  slug: z.string(),
   description: z.string().optional(),
   bannerImage: z.any().optional(),
 });
@@ -45,12 +52,12 @@ const formSchema = z.object({
 export default function NewCategoryPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [bannerImage, setBannerImage] = useState<File | null>(null);
 
   const form = useForm<BlogCategoryFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      slug: 'auto-generated',
       description: '',
     },
   });
@@ -65,7 +72,6 @@ export default function NewCategoryPage() {
 
       const categoryData: BlogCategoryFormData = {
         ...values,
-        bannerImage: bannerImage || undefined,
       };
 
       const result = await createCategory(categoryData);
@@ -188,55 +194,21 @@ export default function NewCategoryPage() {
                 <FormField
                   control={form.control}
                   name="bannerImage"
-                  render={() => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <div className="space-y-4">
-                          {/* New Image Preview */}
-                          {bannerImage && (
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">
-                                Image Preview
-                              </label>
-                              <div className="relative aspect-video w-full rounded-lg border overflow-hidden">
-                                <Image
-                                  src={URL.createObjectURL(bannerImage)}
-                                  alt="New banner preview"
-                                  fill
-                                  className="object-cover"
-                                />
-                              </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setBannerImage(null)}
-                                disabled={isLoading}
-                              >
-                                Remove Image
-                              </Button>
-                            </div>
-                          )}
-
-                          {/* Upload Input */}
-                          <div className="space-y-2">
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={e => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  setBannerImage(file);
-                                }
-                              }}
-                              disabled={isLoading}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                              Upload a banner image for this category.
-                              Recommended: 1200x400px
-                            </p>
-                          </div>
-                        </div>
+                        <ImageUpload
+                          {...field}
+                          maxSize={5 * 1024 * 1024} // 5MB
+                          disabled={isLoading}
+                          className="w-full"
+                        >
+                          <ImageUploadPreview />
+                          <ImageUploadTrigger>
+                            <ImageUploadContent />
+                          </ImageUploadTrigger>
+                          <ImageUploadError />
+                        </ImageUpload>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
