@@ -72,23 +72,28 @@ export default function AchievementsSection({
       {/* Achievements Grid */}
       <div className={cn('grid gap-8', getColumnClasses(columns))}>
         {achievements.map((achievement, index) => (
-          <div key={index} className="group relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-[var(--color-gradient-secondary)]/5 rounded-2xl transform rotate-1 group-hover:rotate-0 transition-transform duration-300" />
-            <div className="relative bg-card rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-border/50">
-              <div
-                className={cn(
-                  'w-16 h-16 rounded-xl flex items-center justify-center mb-6 shadow-lg bg-gradient-to-br',
-                  achievement.gradient
-                )}
-              >
-                <achievement.icon className="h-8 w-8 text-white" />
+          <div key={index} className="group h-full">
+            <div className="h-full bg-card rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-border/50 group-hover:border-primary/20 relative overflow-hidden">
+              {/* Background gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-[var(--color-gradient-secondary)]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+
+              {/* Content */}
+              <div className="relative z-10">
+                <div
+                  className={cn(
+                    'w-16 h-16 rounded-xl flex items-center justify-center mb-6 shadow-lg bg-gradient-to-br',
+                    achievement.gradient
+                  )}
+                >
+                  <achievement.icon className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-card-foreground">
+                  {achievement.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {achievement.description}
+                </p>
               </div>
-              <h3 className="text-xl font-bold mb-3 text-card-foreground">
-                {achievement.title}
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {achievement.description}
-              </p>
             </div>
           </div>
         ))}

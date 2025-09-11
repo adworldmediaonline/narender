@@ -17,6 +17,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Jimmy Frontend',
   description: 'Jimmy Frontend',
+  metadataBase: new URL('https://www.jimmyasija.in'),
+
   robots: {
     index: false,
     follow: false,
