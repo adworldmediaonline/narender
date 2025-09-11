@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { getBlogBySlug, getRelatedBlogs } from '@/lib/server/blog';
-import { ArrowLeft, ArrowRight, Calendar, Share2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -118,21 +118,6 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               </div>
             </div>
           )}
-
-          {/* Share Section */}
-          <div className="mt-6 pt-6 border-t">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-base font-semibold">
-                  Share this article:
-                </span>
-                <Button variant="outline" size="sm">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
