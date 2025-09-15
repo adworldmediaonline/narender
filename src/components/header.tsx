@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Film, Menu } from 'lucide-react';
+import { Hotel, Menu } from 'lucide-react';
 import Link from 'next/link';
 
 const navigation = [
@@ -15,8 +15,8 @@ export default function Header() {
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <Film className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold">Jimmy Asija</span>
+          <Hotel className="h-8 w-8 text-primary" />
+          <span className="text-xl font-bold">Narender Pahuja</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -43,8 +43,8 @@ export default function Header() {
           <SheetContent side="right" className="w-[300px] sm:w-[400px]">
             <div className="flex flex-col space-y-4 mt-4">
               <div className="flex items-center space-x-2 pb-4 border-b">
-                <Film className="h-6 w-6 text-primary" />
-                <span className="text-lg font-semibold">Jimmy Asija</span>
+                <Hotel className="h-6 w-6 text-primary" />
+                <span className="text-lg font-semibold">Narender Pahuja</span>
               </div>
               {navigation.map(item => (
                 <Link

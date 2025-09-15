@@ -18,23 +18,6 @@ interface HeroProfileImageProps {
   floatingCards?: FloatingCard[];
 }
 
-const defaultFloatingCards: FloatingCard[] = [
-  {
-    position: 'top-left',
-    icon: Film,
-    title: 'JRK Films',
-    subtitle: 'Production House',
-    gradient: 'from-primary to-[var(--color-gradient-secondary)]',
-  },
-  {
-    position: 'bottom-right',
-    icon: Award,
-    title: '8+ Films',
-    subtitle: 'Produced',
-    gradient: 'from-[var(--color-gradient-accent)] to-orange-600',
-  },
-];
-
 const getPositionClasses = (position: FloatingCard['position']) => {
   const positions = {
     'top-left': '-top-4 left-4',
@@ -49,7 +32,6 @@ export default function HeroProfileImage({
   src,
   alt,
   className,
-  floatingCards = defaultFloatingCards,
 }: HeroProfileImageProps) {
   return (
     <div className={cn('relative w-full max-w-lg', className)}>
@@ -71,35 +53,6 @@ export default function HeroProfileImage({
           />
         </AspectRatio>
       </div>
-
-      {/* Floating Cards */}
-      {floatingCards.map((card, index) => {
-        const Icon = card.icon;
-        return (
-          <div
-            key={index}
-            className={cn(
-              'absolute bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-primary/10',
-              getPositionClasses(card.position)
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br',
-                  card.gradient
-                )}
-              >
-                <Icon className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">{card.title}</p>
-                <p className="text-xs text-muted-foreground">{card.subtitle}</p>
-              </div>
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }
