@@ -8,6 +8,7 @@ interface AboutSectionProps {
   badge?: {
     text: string;
     icon?: LucideIcon;
+    className?: string;
   };
   title: string;
   titleHighlight?: string;
@@ -16,12 +17,14 @@ interface AboutSectionProps {
     text: string;
     href: string;
     icon?: LucideIcon;
+    className?: string;
   };
   visualElement?: {
     icon: LucideIcon;
     title: string;
     subtitle: string;
     gradient?: string;
+    className?: string;
   };
   className?: string;
   reverseLayout?: boolean;
@@ -50,7 +53,10 @@ export default function AboutSection({
         {/* Content */}
         <div className={cn('space-y-8', contentOrder)}>
           {badge && (
-            <Badge variant="secondary" className="px-3 py-1">
+            <Badge
+              variant="secondary"
+              className={cn('px-3 py-1', badge.className)}
+            >
               {badge.icon && <badge.icon className="w-4 h-4 mr-2" />}
               {badge.text}
             </Badge>
@@ -93,7 +99,12 @@ export default function AboutSection({
         {/* Visual Element */}
         {visualElement && (
           <div className={cn('relative', visualOrder)}>
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/20 to-[var(--color-gradient-secondary)]/20 p-8 flex items-center justify-center">
+            <div
+              className={cn(
+                'aspect-square rounded-2xl bg-gradient-to-br from-primary/20 to-[var(--color-gradient-secondary)]/20 p-8 flex items-center justify-center',
+                visualElement.className
+              )}
+            >
               <div className="text-center space-y-6">
                 <div
                   className={cn(

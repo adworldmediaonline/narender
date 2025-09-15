@@ -39,7 +39,7 @@ export default function HeroTwoColumn({
     <div className={cn('max-w-7xl mx-auto', className)}>
       <div
         className={cn(
-          'grid lg:grid-cols-2',
+          'grid gap-8 lg:grid-cols-2',
           gapClasses[gap],
           alignmentClasses[verticalAlignment]
         )}

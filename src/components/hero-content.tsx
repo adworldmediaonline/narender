@@ -16,6 +16,7 @@ interface HeroContentProps {
   badge?: {
     text: string;
     icon?: LucideIcon;
+    className?: string;
   };
   title: string;
   subtitle: string;
@@ -61,7 +62,8 @@ export default function HeroContent({
         <Badge
           variant="outline"
           className={cn(
-            'px-4 py-2 text-sm font-medium bg-background/80 backdrop-blur-sm border-primary/20',
+            badge.className ||
+              'px-4 py-2 text-sm font-medium bg-background/80 backdrop-blur-sm border-primary/20',
             badgeAlignmentClasses[alignment]
           )}
         >
@@ -72,7 +74,7 @@ export default function HeroContent({
 
       {/* Main Heading */}
       <div className="space-y-4">
-        <h1 className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight bg-gradient-to-r from-foreground via-primary to-[var(--color-gradient-secondary)] bg-clip-text text-transparent leading-tight">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold tracking-tight bg-gradient-to-r from-foreground via-primary to-[var(--color-gradient-secondary)] bg-clip-text text-transparent leading-tight">
           {title}
         </h1>
         <div
@@ -81,13 +83,13 @@ export default function HeroContent({
             dividerAlignmentClasses[alignment]
           )}
         />
-        <p className="text-lg md:text-xl lg:text-2xl font-medium text-foreground">
+        <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-medium text-foreground">
           {subtitle}
         </p>
       </div>
 
       {/* Description */}
-      <p className="text-base md:text-lg text-muted-foreground leading-relaxed font-light max-w-2xl mx-auto lg:mx-0">
+      <p className="text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed font-light max-w-2xl mx-auto lg:mx-0">
         {description}
       </p>
 
@@ -104,10 +106,10 @@ export default function HeroContent({
             <Button
               key={index}
               asChild
-              size="lg"
+              size="default"
               variant={button.variant || 'default'}
               className={cn(
-                'px-6 py-4 text-base md:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300',
+                'px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base md:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300',
                 button.variant === 'default' &&
                   'bg-gradient-to-r from-primary to-[var(--color-gradient-secondary)] hover:from-primary/90 hover:to-[var(--color-gradient-secondary)]/90',
                 button.variant === 'outline' &&

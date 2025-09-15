@@ -53,7 +53,7 @@ export default function AboutPage() {
             </h2>
           </div>
           <div className="prose prose-lg mx-auto">
-            <p className="text-lg md:text-xl leading-relaxed text-center">
+            <p className="text-lg md:text-xl leading-relaxed text-center ">
               From his early days as a passionate visionary to becoming a
               successful hospitality owner, Naren Pahuja's career reflects his
               belief in innovation, hard work, and customer-centric values.
@@ -69,12 +69,12 @@ export default function AboutPage() {
       <Section>
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 ">
               Philosophy
             </h2>
           </div>
           <div className="prose prose-lg mx-auto">
-            <p className="text-lg md:text-xl leading-relaxed text-center">
+            <p className="text-lg md:text-xl leading-relaxed text-center ">
               For Naren, hospitality is not just about managing spaces — it's
               about creating memories and connections. His philosophy combines
               luxury, detail, and warmth, making every guest experience truly
@@ -88,12 +88,12 @@ export default function AboutPage() {
       <Section className="bg-muted/30">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 ">
               Vision
             </h2>
           </div>
           <div className="prose prose-lg mx-auto">
-            <p className="text-lg md:text-xl leading-relaxed text-center">
+            <p className="text-lg md:text-xl leading-relaxed text-center ">
               Naren Pahuja continues to expand his horizons in hospitality,
               travel, and lifestyle, with a goal to establish India as a global
               hub for world-class nightlife and tourism experiences.

@@ -13,6 +13,7 @@ interface AchievementsSectionProps {
   badge?: {
     text: string;
     icon?: LucideIcon;
+    className?: string;
   };
   title: string;
   titleHighlight?: string;

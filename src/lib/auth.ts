@@ -78,10 +78,10 @@ export const auth = betterAuth({
 
           // Send email using reusable template
           await sendOTPEmail(email, subject, otp, message, {
-            appName: 'Jimmy',
+            appName: 'Narender',
             actionText,
             footerText:
-              'This is an automated message from Jimmy App. Please do not reply to this email.',
+              'This is an automated message from Narender Pahuja App. Please do not reply to this email.',
             expiresIn: 10,
             attempts: 3,
           });

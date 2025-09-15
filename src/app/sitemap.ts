@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || 'https://www.jimmyasija.in';
+    process.env.NEXT_PUBLIC_BASE_URL || 'https://narenderpahuja.in';
 
   // Get all published blogs
   const blogsResult = await getBlogs();

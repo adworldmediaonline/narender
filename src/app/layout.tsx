@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from 'sonner';
 import './globals.css';
+import { Metadata } from 'next';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -15,18 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Jimmy Frontend',
-  description: 'Jimmy Frontend',
-  metadataBase: new URL('https://www.jimmyasija.in'),
-
-  robots: {
-    index: false,
-    follow: false,
-    googleBot: {
-      index: false,
-      follow: false,
-    },
-  },
+  metadataBase: new URL('https://narenderpahuja.in'),
 };
 
 export default function RootLayout({
