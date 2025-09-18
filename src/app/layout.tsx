@@ -15,7 +15,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://narenderpahuja.in'),
+  metadataBase: new URL('https://www.narenderpahuja.in'),
+  alternates: {
+    canonical: '/',
+  },
+  verification: {
+    google: ['P49zo1nRMHw6ZbGRk3O9MKRNiHoO28OgXkpSY8VPpko'],
+  },
 };
 
 export default function RootLayout({
