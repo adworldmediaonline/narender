@@ -57,14 +57,7 @@ export async function getBlogs(search?: string) {
   try {
     const blogs = await prisma.blog.findMany({
       where: {
-        status: 'PUBLISHED', // Only show published blogs
-        ...(search && {
-          OR: [
-            { title: { contains: search, mode: 'insensitive' } },
-            { excerpt: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-          ],
-        }),
+        status: 'PUBLISHED',
       },
       include: {
         category: true,
@@ -85,14 +78,8 @@ export async function getBlogsAll(search?: string) {
   try {
     const blogs = await prisma.blog.findMany({
       where: {
-        // status: 'PUBLISHED', // Only show published blogs
-        ...(search && {
-          OR: [
-            { title: { contains: search, mode: 'insensitive' } },
-            { excerpt: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-          ],
-        }),
+        status: 'PUBLISHED',
+
       },
       include: {
         category: true,
