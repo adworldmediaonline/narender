@@ -11,10 +11,74 @@ import { getBlogBySlug, getRelatedBlogs } from '@/lib/server/blog';
 import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 interface BlogDetailPageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: BlogDetailPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const blogResult = await getBlogBySlug(slug);
+
+  if (!blogResult.success || !blogResult.blog) {
+    return {
+      title: 'Blog Not Found',
+      description: 'The requested blog post could not be found.',
+    };
+  }
+
+  const blog = blogResult.blog;
+
+  // Extract image URL from blogImage (Cloudinary format)
+  const blogImageUrl =
+    blog.blogImage &&
+      typeof blog.blogImage === 'object' &&
+      'url' in blog.blogImage
+      ? (blog.blogImage as { url: string }).url
+      : undefined;
+
+  // Strip HTML tags from description for meta description
+  const plainDescription =
+    blog.metaDescription ||
+    blog.excerpt ||
+    blog.description.replace(/<[^>]*>/g, '').substring(0, 160);
+
+  return {
+    title: blog.metaTitle || blog.title,
+    description: plainDescription,
+    keywords: blog.metaKeywords && blog.metaKeywords.length > 0
+      ? blog.metaKeywords
+      : undefined,
+    alternates: {
+      canonical: `/blog/${blog.slug}`,
+    },
+    openGraph: {
+      title: blog.metaTitle || blog.title,
+      description: plainDescription,
+      type: 'article',
+      publishedTime: blog.createdAt.toISOString(),
+      ...(blogImageUrl && {
+        images: [
+          {
+            url: blogImageUrl,
+            alt: blog.imageAltText || blog.title,
+          },
+        ],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: blog.metaTitle || blog.title,
+      description: plainDescription,
+      ...(blogImageUrl && {
+        images: [blogImageUrl],
+      }),
+    },
+  };
 }
 
 export default async function BlogDetailPage({ params }: BlogDetailPageProps) {

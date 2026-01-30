@@ -1,6 +1,15 @@
 import Section from '@/components/section';
 import { Facebook, Instagram, Target, Youtube } from 'lucide-react';
+import { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'About Narender Pahuja',
+  description: 'About Narender Pahuja',
+  alternates: {
+    canonical: '/about',
+  },
+};
 
 const socialLinks = [
   {

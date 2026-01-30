@@ -3,8 +3,17 @@ import Section from '@/components/section';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getBlogs } from '@/lib/server/blog';
 import { Award, Hotel, Newspaper, Star } from 'lucide-react';
+import { Metadata } from 'next';
 import { Suspense } from 'react';
 import { BlogWithCategory } from '../../../lib/types/blog';
+
+export const metadata: Metadata = {
+  title: 'Blog',
+  description: 'Blog',
+  alternates: {
+    canonical: '/blog',
+  },
+};
 
 export default async function BlogPage() {
   return (
