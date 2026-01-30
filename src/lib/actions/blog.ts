@@ -56,6 +56,11 @@ export async function createBlog(data: CreateBlogFormData) {
     });
 
     revalidatePath('/dashboard/blogs');
+    revalidatePath('/blog');
+    // Revalidate individual blog page if created as PUBLISHED
+    if (blog.status === 'PUBLISHED') {
+      revalidatePath(`/blog/${blog.slug}`);
+    }
     return { success: true, blog };
   } catch (error) {
     console.error('Error creating blog:', error);
@@ -146,6 +151,11 @@ export async function updateBlog(id: string, data: EditBlogFormData) {
     });
 
     revalidatePath('/dashboard/blogs');
+    revalidatePath('/blog');
+    // Revalidate individual blog page if status changed to PUBLISHED
+    if (data.status === 'PUBLISHED' && existingBlog.status !== 'PUBLISHED') {
+      revalidatePath(`/blog/${updatedBlog.slug}`);
+    }
     return { success: true, blog: updatedBlog };
   } catch (error) {
     console.error('Error updating blog:', error);
@@ -190,6 +200,11 @@ export async function deleteBlog(id: string) {
     });
 
     revalidatePath('/dashboard/blogs');
+    revalidatePath('/blog');
+    // Revalidate individual blog page if it was published
+    if (blog.status === 'PUBLISHED') {
+      revalidatePath(`/blog/${blog.slug}`);
+    }
     return { success: true };
   } catch (error) {
     console.error('Error deleting blog:', error);
